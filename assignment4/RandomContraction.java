@@ -11,9 +11,11 @@ public class RandomContraction {
     }
     String fileName = arg[0];
 
+    TreeMap<Integer, List<List<Integer>>> minCutsMap = new TreeMap<>();
     Set<Integer> minCuts = new TreeSet<>();
 
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 10000; i++) {
+      System.out.println("=================");
       Graph graph = graphFromFile(fileName);
       System.out.println(graph.getGraph());
 
@@ -21,41 +23,64 @@ public class RandomContraction {
 
       if(graph.getGraph().keySet().size() == 2) {
 
-          Set<Map.Entry<Integer, Set<Integer>>> graphEntries = graph.getGraph().entrySet();
-          Iterator<Map.Entry<Integer, Set<Integer>>> it = graph.getGraph().entrySet().iterator();
+          Set<Map.Entry<Integer, List<Integer>>> graphEntries = graph.getGraph().entrySet();
+          Iterator<Map.Entry<Integer, List<Integer>>> it = graph.getGraph().entrySet().iterator();
 
-          Map.Entry<Integer, Set<Integer>> obj = it.next();
+          Map.Entry<Integer, List<Integer>> obj = it.next();
 
           List<Integer> firstList = new ArrayList<>(obj.getValue());
           minCuts.add(firstList.size());
           Integer firstKey = obj.getKey();
+          //firstList.remove(firstKey);
           firstList.add(firstKey);
+          Collections.reverse(firstList);
 
           obj = it.next();
           List<Integer> secondList = new ArrayList<>(obj.getValue());
           Integer secondKey = obj.getKey();
-          minCuts.add(secondList.size());
-          System.out.println(secondList.size());
+          //secondList.remove(secondKey);
+          secondList.add(secondKey);
+          Collections.reverse(secondList);
+          System.out.println("First list: " + firstList);
+          System.out.println("Second list: " + secondList);
+
+          List<Integer> minCutList = new ArrayList<>(obj.getValue());
+          minCutList.retainAll(firstList);
+          minCutList.remove(firstKey);
+          minCutList.remove(secondKey);
+          System.out.println("After retention: " + minCutList);
+
+          List<List<Integer>> remainedLists = new ArrayList<>();
+          remainedLists.add(firstList);
+          remainedLists.add(secondList);
+
+          minCutsMap.put(minCutList.size(), remainedLists);
+
+          minCuts.add(minCutList.size());
+
+          System.out.println(remainedLists);
       }
     }
     
-    System.out.println("min cuts list: " + minCuts);
+    System.out.println("Final number is " + minCutsMap.firstEntry());
 
-    System.out.println("Final number is " + minCuts.iterator().next());
+    System.out.println("min cuts count list: " + minCuts);
   }
 
   private static Graph contract(Graph graph) {
+    System.out.println(graph);
     if(graph.getGraph().size() < 3) {
       return graph;
     };
 
-    Map.Entry<Integer, Set<Integer>> v1 = graph.pollRandomVertex();
+    Map.Entry<Integer, List<Integer>> v1 = graph.pollRandomVertex();
     System.out.println("chosen v1= " + v1);
 
-    Map.Entry<Integer, Set<Integer>> v2 = graph.pollRandomVertex(v1.getValue());
+    Map.Entry<Integer, List<Integer>> v2 = graph.pollRandomVertex(v1.getValue());
     System.out.println("chosen v2= " + v2);
 
     if(v2 == null) {
+      graph.addVertex(v1.getKey(), v1.getValue());
       return graph;
     } else if(v2.getValue().isEmpty()) {
       graph.addVertex(v1.getKey(), v1.getValue());
@@ -66,9 +91,11 @@ public class RandomContraction {
     List<Integer> mergedList = new ArrayList<>();
     mergedList.addAll(v1.getValue());
     mergedList.addAll(v2.getValue());
-    mergedList.remove(v1.getKey());
-    graph.addVertex(v1.getKey(), new HashSet<>(mergedList));
-    System.out.println("after merge " + v1.getKey() + "= " + graph.getGraph().get(v1.getKey()));
+    mergedList.remove(v2.getKey());
+    //mergedList.remove(v1.getKey());
+    //mergedList.add(v2.getKey());
+    graph.addVertex(v1.getKey(), mergedList);
+    System.out.println("after merge " + v2.getKey() + "= " + graph.getGraph().get(v1.getKey()));
 
     return contract(graph);
   }
@@ -89,7 +116,7 @@ public class RandomContraction {
           .collect(Collectors.toList());  
 
         if(row.size() > 1) {
-          graphList.fillVertex(row.get(0), new HashSet<>(row));
+          graphList.fillVertex(row.get(0), row);
         }
 
         currentLine = reader.readLine();
