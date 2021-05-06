@@ -22,9 +22,13 @@ public class Node {
   public List<Node> getConnectedNodes() {
     return connectedNodeList;
   }
-
+  
   public void connectNode(Node node) {
     connectedNodeList.add(node);
+  }
+
+  public void disconnectNode(Node node) {
+    connectedNodeList.remove(node);
   }
 
   public void reverse() {
