@@ -47,9 +47,17 @@ public class Node {
     dfsIndex = index;
   }
 
+  public boolean isExplored() {
+    return this.isExplored;
+  }
+
+  public void setExplored(boolean value) {
+    this.isExplored = value;
+  }
+
   @Override
   public String toString() {
-    return "Id " + nodeId + " connected to " + connectedNodeList.stream().map(n -> n.getNodeId()).collect(Collectors.toList());
+    return "Id " + nodeId  + (dfsIndex == null ? "" : "(" + dfsIndex.toString() + ") ") + " connected to " + connectedNodeList.stream().map(n -> n.getNodeId()).collect(Collectors.toList());
   }
 
   @Override
