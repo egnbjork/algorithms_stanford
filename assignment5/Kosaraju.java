@@ -4,6 +4,8 @@ import java.util.stream.*;
 
 public class Kosaraju {
 
+  private static int dfsIndex;
+
   public static void main(String[] arg) {
     if(arg.length != 1) {
       System.out.println("please give file name");
@@ -25,11 +27,10 @@ public class Kosaraju {
   }
 
   private static TreeMap<Long, Node>  reverseDfs(TreeMap<Long, Node> graph) {
-    System.out.println("graph: " + graph);
     TreeMap<Long, Node> reversedDfs = new TreeMap<>();
     dfs(graph, new Stack<>(), new TreeSet<>());
 
-    System.out.println("reversed graph: " + reversedDfs);
+    //System.out.println("reversed graph: " + reversedDfs);
     return reversedDfs;
   }
 
@@ -42,26 +43,50 @@ public class Kosaraju {
       System.out.println("explored " + node.getNodeId());
       explNodeIdSet.add(node.getNodeId());
     } else if(nodeStack.isEmpty()) {
-      return explNodeIdSet.first();
+      System.out.println("BOO");
+      System.out.println(map);
+      System.out.println(explNodeIdSet);
+      if(explNodeIdSet.size() != map.keySet().size()) {
+        System.out.println("MOOHOO");
+        Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
+        nodeStack.push(map.get(nextNonExplored));
+        System.out.println("explored " + nextNonExplored);
+        explNodeIdSet.add(nextNonExplored);
+      } else {
+        return explNodeIdSet.first();
+      }
     }
     
     Node node = map.get(nodeStack.pop().getNodeId());
+
+    node.setExplored(true);
+    System.out.println("explored " + node.getNodeId());
+    explNodeIdSet.add(node.getNodeId());
+    nodeStack.push(node);
+
     List<Node> connectedNodes = node
       .getConnectedNodes()
       .stream()
       .filter(n -> !n.isExplored())
+      .filter(n -> !explNodeIdSet.contains(n.getNodeId()))
       .collect(Collectors.toList());
+    System.out.println("===============================>>>>>>>>");
+    System.out.println(connectedNodes);
 
     if(connectedNodes.isEmpty()) {
-      node.setDfsIndex(Long.valueOf(nodeStack.search(node)));
+      System.out.println(nodeStack);
+      System.out.println("===>ME");
+      System.out.println(node);
+      if(node.getDfsIndex() == null) {
+        node.setDfsIndex(Long.valueOf(++dfsIndex));
+        System.out.print("========>dfsIndex ");
+        System.out.println(dfsIndex);
+      }
       nodeStack.pop();
       dfs(map, nodeStack, explNodeIdSet);
       return node.getNodeId();
     }
 
-    node.setExplored(true);
-    System.out.println("explored " + node.getNodeId());
-    nodeStack.push(node);
     connectedNodes.forEach(n -> nodeStack.push(n));
     nodeStack.peek().setExplored(true);
 
@@ -69,8 +94,17 @@ public class Kosaraju {
     System.out.println("------- stack" + nodeStack);
 
     dfs(map, nodeStack, explNodeIdSet);
-
     return explNodeIdSet.first();
+  }
+
+  private static Long getNextNonExplored(TreeMap<Long, Node> map, TreeSet<Long> explNodeIdSet) {
+    NavigableSet<Long> nSet = ((NavigableSet) map.keySet()).descendingSet();
+    for(Long id : nSet) {
+      if(!explNodeIdSet.contains(id)) {
+        return id;
+      }
+    }
+    return 0L;
   }
 
   private static TreeMap<Long, Node> reverseGraph(Map<Long, Node> graph) {

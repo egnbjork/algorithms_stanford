@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.stream.*;
 
-public class Node {
+public class Node implements Comparable<Node> {
   private Long nodeId;
   private List<Node> connectedNodeList;
 
@@ -53,6 +53,11 @@ public class Node {
 
   public void setExplored(boolean value) {
     this.isExplored = value;
+  }
+
+  @Override
+  public int compareTo(Node node) {
+    return this.getNodeId().compareTo(node.getNodeId());
   }
 
   @Override
