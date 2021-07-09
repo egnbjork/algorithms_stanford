@@ -6,6 +6,8 @@ public class Kosaraju {
 
   private static int dfsIndex;
 
+  private static int strongComponentCount = 1;
+
   public static void main(String[] arg) {
     if(arg.length != 1) {
       System.out.println("please give file name");
@@ -14,24 +16,53 @@ public class Kosaraju {
     String fileName = arg[0];
 
     TreeMap<Long, Node> nodeMap = nodesFromFile(fileName);
+    System.out.println("\nloaded from file");
     System.out.println(nodeMap);
-    TreeMap<Long, Node> reversedMap = reverseGraph(nodeMap);
-    System.out.println("reversed");
-    System.out.println(reversedMap);
-    TreeMap<Long, Node> reversedDfsMap = reverseDfs(reversedMap);
-    System.out.println("reversed dfs");
-    System.out.println(reversedDfsMap);
-    //recurse from the biggest
-    // reverse nodes + change indexes
-    // recurse from the biggest
+
+    TreeMap<Long, Node> first = reverseGraph(nodeMap);
+    System.out.println("\nreversed");
+    System.out.println(first);
+
+    TreeMap<Long, Node> second = dfs(first);
+    System.out.println("\n\nfirst dfs");
+    System.out.println(second);
+    System.out.println("Component count");
+    System.out.println(strongComponentCount);
+    strongComponentCount = 1;
+    dfsIndex = 0;
+
+    TreeMap<Long, Node> third = reverseIndexes(second);
+    System.out.println("\n reversed nodes");
+    System.out.println(third);
+
+    TreeMap<Long, Node> fourth = dfs(third);
+    System.out.println("\n second dfs");
+    System.out.println(fourth);
+
+    System.out.println("Component count");
+    System.out.println(strongComponentCount);
   }
 
-  private static TreeMap<Long, Node>  reverseDfs(TreeMap<Long, Node> graph) {
-    TreeMap<Long, Node> reversedDfs = new TreeMap<>();
-    dfs(graph, new Stack<>(), new TreeSet<>());
+  private static TreeMap<Long, Node> reverseIndexes(TreeMap<Long, Node> graph) {
+    System.out.println("\nreverse indexes...");
+    TreeMap<Long, Node> reversedIndexMap = new TreeMap<>();
 
-    //System.out.println("reversed graph: " + reversedDfs);
-    return reversedDfs;
+    for(Map.Entry<Long, Node> entry : graph.entrySet()) {
+      Node node = entry.getValue();
+      node.reverse();
+      node.setExplored(false);
+
+      System.out.println(node);
+      reversedIndexMap.put(node.getNodeId(), node);
+    }
+
+    return reversedIndexMap;
+  }
+
+  private static TreeMap<Long, Node>  dfs(TreeMap<Long, Node> graph) {
+    System.out.println("\ndfs...");
+    dfs(graph, new Stack<>(), new TreeSet<>());
+    return graph;
   }
 
   private static long dfs(TreeMap<Long, Node> map, Stack<Node> nodeStack, TreeSet<Long> explNodeIdSet) {
@@ -40,27 +71,21 @@ public class Kosaraju {
       Node node = map.lastEntry().getValue();
       node.setExplored(true);
       nodeStack.push(node);
-      System.out.println("explored " + node.getNodeId());
       explNodeIdSet.add(node.getNodeId());
     } else if(nodeStack.isEmpty()) {
-      System.out.println("BOO");
-      System.out.println(map);
-      System.out.println(explNodeIdSet);
       if(explNodeIdSet.size() != map.keySet().size()) {
-        System.out.println("MOOHOO");
         Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
+        strongComponentCount++;
         nodeStack.push(map.get(nextNonExplored));
-        System.out.println("explored " + nextNonExplored);
         explNodeIdSet.add(nextNonExplored);
       } else {
         return explNodeIdSet.first();
       }
     }
-    
+
     Node node = map.get(nodeStack.pop().getNodeId());
 
     node.setExplored(true);
-    System.out.println("explored " + node.getNodeId());
     explNodeIdSet.add(node.getNodeId());
     nodeStack.push(node);
 
@@ -70,17 +95,18 @@ public class Kosaraju {
       .filter(n -> !n.isExplored())
       .filter(n -> !explNodeIdSet.contains(n.getNodeId()))
       .collect(Collectors.toList());
-    System.out.println("===============================>>>>>>>>");
-    System.out.println(connectedNodes);
 
     if(connectedNodes.isEmpty()) {
-      System.out.println(nodeStack);
-      System.out.println("===>ME");
-      System.out.println(node);
-      if(node.getDfsIndex() == null) {
-        node.setDfsIndex(Long.valueOf(++dfsIndex));
-        System.out.print("========>dfsIndex ");
-        System.out.println(dfsIndex);
+      if(node.isReversed()) {
+        if(node.getReversedDfsIndex() == null) {
+          node.setReversedDfsIndex(Long.valueOf(++dfsIndex));
+          System.out.println(dfsIndex);
+        }
+      } else {
+        if(node.getDfsIndex() == null) {
+          node.setDfsIndex(Long.valueOf(++dfsIndex));
+          System.out.println(dfsIndex);
+        }
       }
       nodeStack.pop();
       dfs(map, nodeStack, explNodeIdSet);
@@ -91,7 +117,6 @@ public class Kosaraju {
     nodeStack.peek().setExplored(true);
 
     System.out.print("node " + node.getNodeId() + " has " + connectedNodes.size() + " connected nodes " + connectedNodes);
-    System.out.println("------- stack" + nodeStack);
 
     dfs(map, nodeStack, explNodeIdSet);
     return explNodeIdSet.first();
@@ -108,27 +133,20 @@ public class Kosaraju {
   }
 
   private static TreeMap<Long, Node> reverseGraph(Map<Long, Node> graph) {
+    System.out.println("\nreverse graph...");
     TreeMap<Long, Node> reversedGraph = new TreeMap<>();
 
     for(Node node : graph.values()) {
       List<Node> connectedNodeList = node.getConnectedNodes();
-      //System.out.println("node " + node.getNodeId());
       for(int i = 0; i < connectedNodeList.size(); i++) {
         Node connectedNode = connectedNodeList.get(i);
 
         Node reversedNode = reversedGraph.getOrDefault(connectedNode.getNodeId(), new Node(connectedNode.getNodeId()));
-//        System.out.println("reversedNode= " + reversedNode);
 
         reversedNode.connectNode(node);
+        reversedNode.setDfsIndex(node.getDfsIndex());
         reversedGraph.put(reversedNode.getNodeId(), reversedNode);
 
-//        System.out.println("connected node " + connectedNode.getNodeId());
- //       System.out.print("===graph ");
- //      System.out.println(graph);
-//        System.out.print("===reversed ");
-//        System.out.println(reversedGraph);
-//        System.out.println("");
-//        System.out.println("");
       }
     }
     return reversedGraph;

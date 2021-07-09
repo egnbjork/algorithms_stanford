@@ -8,21 +8,35 @@ public class Node implements Comparable<Node> {
   private boolean isExplored;
   private boolean isReversed;
   private boolean isDfs;
+  private Long nodeIndex;
   private Long dfsIndex;
+  private Long reversedDfsIndex;
 
   public Node(Long nodeId) {
     this.nodeId = nodeId;
+    this.nodeIndex = nodeId;
     connectedNodeList = new ArrayList<>();
   }
   
+  public void setReversedDfsIndex(Long index) {
+    this.reversedDfsIndex = index;
+  }
+
+  public Long getReversedDfsIndex() {
+    return this.reversedDfsIndex;
+  }
   public Long getNodeId() {
-    return nodeId;
+    return isReversed ? dfsIndex : nodeId;
   }
 
   public List<Node> getConnectedNodes() {
     return connectedNodeList;
   }
   
+  public Long getNodeIndex() {
+    return nodeIndex;
+  }
+
   public void connectNode(Node node) {
     connectedNodeList.add(node);
   }
@@ -62,7 +76,10 @@ public class Node implements Comparable<Node> {
 
   @Override
   public String toString() {
-    return "Id " + nodeId  + (dfsIndex == null ? "" : "(" + dfsIndex.toString() + ") ") + " connected to " + connectedNodeList.stream().map(n -> n.getNodeId()).collect(Collectors.toList());
+    return "Id " + getNodeId() + 
+      (isReversed() ? " reversed (id: " + nodeId + ")" :
+         (dfsIndex == null ? "" : "(dfsIndex: " + dfsIndex.toString() + ")")) +
+         " connected to " + connectedNodeList.stream().map(n -> n.getNodeIndex()).collect(Collectors.toList());
   }
 
   @Override
