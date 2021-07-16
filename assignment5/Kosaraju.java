@@ -68,14 +68,18 @@ public class Kosaraju {
   private static long dfs(TreeMap<Long, Node> map, Stack<Node> nodeStack, TreeSet<Long> explNodeIdSet) {
 
     if(nodeStack.isEmpty() && explNodeIdSet.isEmpty()) {
+      //initialization
       Node node = map.lastEntry().getValue();
+
       node.setExplored(true);
       nodeStack.push(node);
       explNodeIdSet.add(node.getNodeId());
     } else if(nodeStack.isEmpty()) {
+        System.out.println("===New component found");
+        strongComponentCount++;
+
       if(explNodeIdSet.size() != map.keySet().size()) {
         Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
-        strongComponentCount++;
         nodeStack.push(map.get(nextNonExplored));
         explNodeIdSet.add(nextNonExplored);
       } else {
@@ -116,14 +120,13 @@ public class Kosaraju {
     connectedNodes.forEach(n -> nodeStack.push(n));
     nodeStack.peek().setExplored(true);
 
-    System.out.print("node " + node.getNodeId() + " has " + connectedNodes.size() + " connected nodes " + connectedNodes);
-
     dfs(map, nodeStack, explNodeIdSet);
     return explNodeIdSet.first();
   }
 
   private static Long getNextNonExplored(TreeMap<Long, Node> map, TreeSet<Long> explNodeIdSet) {
     NavigableSet<Long> nSet = ((NavigableSet) map.keySet()).descendingSet();
+
     for(Long id : nSet) {
       if(!explNodeIdSet.contains(id)) {
         return id;
