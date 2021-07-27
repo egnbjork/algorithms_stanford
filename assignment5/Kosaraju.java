@@ -8,6 +8,7 @@ public class Kosaraju {
 
   private static int strongComponentCount = 0;
   private static Map<Integer, Long> componentSizeMap = new HashMap<>();
+  private static long accSize = 0;
 
   public static void main(String[] arg) {
     if(arg.length != 1) {
@@ -32,6 +33,7 @@ public class Kosaraju {
     System.out.println(strongComponentCount);
     strongComponentCount = 0;
     dfsIndex = 0;
+    accSize = 0;
 
     TreeMap<Long, Node> reversedIndexes = reverseIndexes(firstDfs);
     System.out.println("\n reversed indexes");
@@ -49,7 +51,12 @@ public class Kosaraju {
     System.out.println(strongComponentCount);
 
     System.out.println("\n\n");
-    System.out.println(componentSizeMap.values());
+    System.out.println(componentSizeMap
+        .values()
+        .stream()
+        .sorted(Collections.reverseOrder())
+        .limit(5)
+        .collect(Collectors.toList()));
   }
 
   private static TreeMap<Long, Node> reverseIndexes(TreeMap<Long, Node> graph) {
@@ -82,12 +89,16 @@ public class Kosaraju {
       nodeStack.push(map.lastEntry().getValue());
       //System.out.println("starts with " + nodeStack.peek().getNodeIndex());
     } else if(nodeStack.isEmpty()) {
-        //System.out.println("!!!");
-        //System.out.println(explNodeIdSet.size());
-        long componentSize = explNodeIdSet.size();
-        if(componentSizeMap.containsKey(strongComponentCount)) {
-          componentSize = componentSizeMap.get(strongComponentCount);
+        System.out.println("!!!");
+        long componentSize;
+        if(componentSizeMap.isEmpty()) {
+          componentSize = explNodeIdSet.size();
+        } else {
+          componentSize = explNodeIdSet.size() - accSize;
         }
+
+        accSize = explNodeIdSet.size();
+        System.out.println(componentSize);
      
         strongComponentCount++;
         componentSizeMap.put(strongComponentCount, componentSize);
