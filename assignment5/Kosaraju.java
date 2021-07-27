@@ -18,16 +18,16 @@ public class Kosaraju {
 
     TreeMap<Long, Node> nodeMap = nodesFromFile(fileName);
     System.out.println("\nloaded from file");
-    System.out.println(nodeMap);
+    //System.out.println(nodeMap);
 
     TreeMap<Long, Node> reversedGraph = reverseGraph(nodeMap);
     System.out.println("\nreversed");
-    System.out.println(reversedGraph);
-    System.out.println(reversedGraph.get(2L));
+    //System.out.println(reversedGraph);
+    //System.out.println(reversedGraph.get(2L));
 
     TreeMap<Long, Node> firstDfs = dfs(reversedGraph);
     System.out.println("\n\nfirst dfs");
-    System.out.println(firstDfs);
+    //System.out.println(firstDfs);
     System.out.println("Component count");
     System.out.println(strongComponentCount);
     strongComponentCount = 0;
@@ -35,15 +35,15 @@ public class Kosaraju {
 
     TreeMap<Long, Node> reversedIndexes = reverseIndexes(firstDfs);
     System.out.println("\n reversed indexes");
-    System.out.println(reversedIndexes);
+    //System.out.println(reversedIndexes);
 
     TreeMap<Long, Node> reversedDfsGraph = reverseGraph(reversedIndexes);
     System.out.println("\n reversed dfs graph");
-    System.out.println(reversedDfsGraph);
+    //System.out.println(reversedDfsGraph);
 
     TreeMap<Long, Node> secondDfs = dfs(reversedDfsGraph);
     System.out.println("\n second dfs");
-    System.out.println(secondDfs);
+    //System.out.println(secondDfs);
 
     System.out.println("Component count");
     System.out.println(strongComponentCount);
