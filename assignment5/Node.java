@@ -6,27 +6,21 @@ public class Node implements Comparable<Node> {
   private List<Node> connectedNodeList;
 
   private boolean isExplored;
-  private boolean isReversed;
-  private boolean isDfs;
   private Long nodeIndex;
   private Long dfsIndex;
-  private Long reversedDfsIndex;
 
   public Node(Long nodeId) {
     this.nodeId = nodeId;
     this.nodeIndex = nodeId;
     connectedNodeList = new ArrayList<>();
   }
-  
-  public void setReversedDfsIndex(Long index) {
-    this.reversedDfsIndex = index;
+
+  public Long getNodeId() {
+    return nodeId;
   }
 
-  public Long getReversedDfsIndex() {
-    return this.reversedDfsIndex;
-  }
-  public Long getNodeId() {
-    return isReversed ? dfsIndex : nodeId;
+  public void setNodeIndex(Long index) {
+    this.nodeIndex = index;
   }
 
   public List<Node> getConnectedNodes() {
@@ -43,14 +37,6 @@ public class Node implements Comparable<Node> {
 
   public void disconnectNode(Node node) {
     connectedNodeList.remove(node);
-  }
-
-  public void reverse() {
-    isReversed = isReversed ? false : true;
-  }
-
-  public boolean isReversed() {
-    return isReversed;
   }
 
   public Long getDfsIndex() {
@@ -77,9 +63,9 @@ public class Node implements Comparable<Node> {
   @Override
   public String toString() {
     return "Id " + getNodeId() + 
-      (isReversed() ? " reversed (id: " + nodeId + ")" :
-         (dfsIndex == null ? "" : "(dfsIndex: " + dfsIndex.toString() + ")")) +
-         " connected to " + connectedNodeList.stream().map(n -> n.getNodeIndex()).collect(Collectors.toList());
+      " nodeIndex " + nodeIndex + " " +
+         (dfsIndex == null ? "" : "(dfsIndex: " + dfsIndex.toString() + ")") +
+         " connected to " + connectedNodeList.stream().map(n -> n.nodeIndex + " id " + n.nodeId + " index " + n.nodeIndex + " dfs " + n.dfsIndex).collect(Collectors.toList()) + (isExplored() ? " E" : "");
   }
 
   @Override
@@ -92,7 +78,7 @@ public class Node implements Comparable<Node> {
       return false;
     }
 
-    return this.nodeId.equals(((Node) obj).getNodeId());
+    return this.nodeIndex.equals(((Node) obj).getNodeIndex());
   }
 
   @Override

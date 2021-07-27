@@ -6,7 +6,7 @@ public class Kosaraju {
 
   private static int dfsIndex;
 
-  private static int strongComponentCount = 1;
+  private static int strongComponentCount = 0;
 
   public static void main(String[] arg) {
     if(arg.length != 1) {
@@ -19,28 +19,32 @@ public class Kosaraju {
     System.out.println("\nloaded from file");
     System.out.println(nodeMap);
 
-    TreeMap<Long, Node> first = reverseGraph(nodeMap);
+    TreeMap<Long, Node> reversedGraph = reverseGraph(nodeMap);
     System.out.println("\nreversed");
-    System.out.println(first);
+    System.out.println(reversedGraph);
 
-    TreeMap<Long, Node> second = dfs(first);
+    TreeMap<Long, Node> firstDfs = dfs(reversedGraph);
     System.out.println("\n\nfirst dfs");
-    System.out.println(second);
+    System.out.println(firstDfs);
     System.out.println("Component count");
     System.out.println(strongComponentCount);
     strongComponentCount = 1;
     dfsIndex = 0;
 
-    TreeMap<Long, Node> third = reverseIndexes(second);
-    System.out.println("\n reversed nodes");
-    System.out.println(third);
+    //TreeMap<Long, Node> reversedIndexes = reverseIndexes(firstDfs);
+    //System.out.println("\n reversed indexes");
+    //System.out.println(reversedIndexes);
 
-    TreeMap<Long, Node> fourth = dfs(third);
-    System.out.println("\n second dfs");
-    System.out.println(fourth);
+    //TreeMap<Long, Node> reversedDfsGraph = reverseGraph(reversedIndexes);
+    //System.out.println("\n reversed dfs graph");
+    //System.out.println(reversedDfsGraph);
 
-    System.out.println("Component count");
-    System.out.println(strongComponentCount);
+    //TreeMap<Long, Node> secondDfs = dfs(reversedDfsGraph);
+    //System.out.println("\n second dfs");
+    //System.out.println(secondDfs);
+
+    //System.out.println("Component count");
+    //System.out.println(strongComponentCount);
   }
 
   private static TreeMap<Long, Node> reverseIndexes(TreeMap<Long, Node> graph) {
@@ -49,11 +53,11 @@ public class Kosaraju {
 
     for(Map.Entry<Long, Node> entry : graph.entrySet()) {
       Node node = entry.getValue();
-      node.reverse();
+      node.setNodeIndex(node.getDfsIndex());
+      node.setDfsIndex(null);
       node.setExplored(false);
 
-      System.out.println(node);
-      reversedIndexMap.put(node.getNodeId(), node);
+      reversedIndexMap.put(node.getNodeIndex(), node);
     }
 
     return reversedIndexMap;
@@ -69,56 +73,56 @@ public class Kosaraju {
 
     if(nodeStack.isEmpty() && explNodeIdSet.isEmpty()) {
       //initialization
-      Node node = map.lastEntry().getValue();
-
-      node.setExplored(true);
-      nodeStack.push(node);
-      explNodeIdSet.add(node.getNodeId());
+      //put biggest node to queue
+      nodeStack.push(map.lastEntry().getValue());
+      System.out.println("starts with " + nodeStack.peek().getNodeIndex());
     } else if(nodeStack.isEmpty()) {
-        System.out.println("===New component found");
         strongComponentCount++;
 
-      if(explNodeIdSet.size() != map.keySet().size()) {
-        Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
-        nodeStack.push(map.get(nextNonExplored));
-        explNodeIdSet.add(nextNonExplored);
-      } else {
-        return explNodeIdSet.first();
-      }
+        if(explNodeIdSet.size() != map.keySet().size()) {
+          Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
+          nodeStack.push(map.get(nextNonExplored));
+          explNodeIdSet.add(nextNonExplored);
+        } else {
+          return explNodeIdSet.first();
+        }
     }
 
-    Node node = map.get(nodeStack.pop().getNodeId());
-
+    //get last node from the queue
+    Node node = map.get(nodeStack.pop().getNodeIndex());
+    System.out.println("goes to " + node.getNodeIndex());
+    //map as explored
     node.setExplored(true);
-    explNodeIdSet.add(node.getNodeId());
-    nodeStack.push(node);
+    //add to explored node set
+    explNodeIdSet.add(node.getNodeIndex());
 
+    //get all connected non-explored nodes
     List<Node> connectedNodes = node
       .getConnectedNodes()
       .stream()
       .filter(n -> !n.isExplored())
-      .filter(n -> !explNodeIdSet.contains(n.getNodeId()))
+      .filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
       .collect(Collectors.toList());
 
+    System.out.println(connectedNodes.size() + " non-explored nodes found");
+
+    //if no connected nodes found
     if(connectedNodes.isEmpty()) {
-      if(node.isReversed()) {
-        if(node.getReversedDfsIndex() == null) {
-          node.setReversedDfsIndex(Long.valueOf(++dfsIndex));
-          System.out.println(dfsIndex);
-        }
-      } else {
-        if(node.getDfsIndex() == null) {
-          node.setDfsIndex(Long.valueOf(++dfsIndex));
-          System.out.println(dfsIndex);
-        }
+      //if empty dfs index, put one
+      if(node.getDfsIndex() == null) {
+        node.setDfsIndex(Long.valueOf(++dfsIndex));
+        System.out.println(dfsIndex);
       }
-      nodeStack.pop();
+
+      //recurse
       dfs(map, nodeStack, explNodeIdSet);
-      return node.getNodeId();
+      return node.getNodeIndex();
     }
 
+    //if connected nodes found
+    //put node and connected nodes to stack
+    nodeStack.push(node);
     connectedNodes.forEach(n -> nodeStack.push(n));
-    nodeStack.peek().setExplored(true);
 
     dfs(map, nodeStack, explNodeIdSet);
     return explNodeIdSet.first();
@@ -137,21 +141,30 @@ public class Kosaraju {
 
   private static TreeMap<Long, Node> reverseGraph(Map<Long, Node> graph) {
     System.out.println("\nreverse graph...");
+    System.out.println(graph);
     TreeMap<Long, Node> reversedGraph = new TreeMap<>();
 
     for(Node node : graph.values()) {
       List<Node> connectedNodeList = node.getConnectedNodes();
+      System.out.println("node " + node);
+      System.out.println("connected node list " + connectedNodeList);
       for(int i = 0; i < connectedNodeList.size(); i++) {
         Node connectedNode = connectedNodeList.get(i);
 
-        Node reversedNode = reversedGraph.getOrDefault(connectedNode.getNodeId(), new Node(connectedNode.getNodeId()));
+        Node reversedNode = reversedGraph.getOrDefault(connectedNode.getNodeIndex(), new Node(connectedNode.getNodeIndex()));
 
-        reversedNode.connectNode(node);
-        reversedNode.setDfsIndex(node.getDfsIndex());
-        reversedGraph.put(reversedNode.getNodeId(), reversedNode);
-
+        reversedNode.connectNode(reversedGraph.getOrDefault(node.getNodeIndex(), new Node(node.getNodeIndex())));
+        reversedNode.setDfsIndex(connectedNode.getDfsIndex());
+        reversedGraph.put(reversedNode.getNodeIndex(), reversedNode);
       }
     }
+
+    System.out.println("COMPARING");
+    System.out.println(reversedGraph.get(1L));
+    System.out.println(reversedGraph.get(1L).getConnectedNodes().get(0));
+    System.out.println(reversedGraph.get(8L));
+    System.out.println(reversedGraph.get(1L).getConnectedNodes().get(0) == reversedGraph.get(8L));
+
     return reversedGraph;
   }
 
@@ -179,7 +192,6 @@ public class Kosaraju {
         node.connectNode(connectedNode);
         nodeMap.put(connectedNode.getNodeId(), connectedNode);
       } while(currentLine !=  null);
-
     } catch (Exception e) {
       e.printStackTrace();
     }
