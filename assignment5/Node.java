@@ -65,7 +65,7 @@ public class Node implements Comparable<Node> {
     return "Id " + getNodeId() + 
       " nodeIndex " + nodeIndex + " " +
          (dfsIndex == null ? "" : "(dfsIndex: " + dfsIndex.toString() + ")") +
-         " connected to " + connectedNodeList.stream().map(n -> n.nodeIndex + " id " + n.nodeId + " index " + n.nodeIndex + " dfs " + n.dfsIndex).collect(Collectors.toList()) + (isExplored() ? " E" : "");
+         " connected to " + connectedNodeList.stream().map(n -> n.nodeIndex + " id " + n.nodeId + " index " + n.nodeIndex + " dfs " + n.dfsIndex).collect(Collectors.toList()) + (isExplored() ? " E" : "") + "\n";
   }
 
   @Override

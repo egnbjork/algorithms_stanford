@@ -4,7 +4,7 @@ import java.util.stream.*;
 
 public class Kosaraju {
 
-  private static int dfsIndex;
+  private static long dfsIndex;
 
   private static int strongComponentCount = 0;
   private static Map<Integer, Long> componentSizeMap = new HashMap<>();
@@ -39,15 +39,15 @@ public class Kosaraju {
 
     TreeMap<Long, Node> reversedIndexes = reverseIndexes(firstDfs);
     System.out.println("\n reversed indexes");
-    //System.out.println(reversedIndexes);
+    System.out.println(reversedIndexes);
 
     TreeMap<Long, Node> reversedDfsGraph = reverseGraph(reversedIndexes);
     System.out.println("\n reversed dfs graph");
-    //System.out.println(reversedDfsGraph);
+    System.out.println(reversedDfsGraph);
 
     TreeMap<Long, Node> secondDfs = dfs(reversedDfsGraph);
     System.out.println("\n second dfs");
-    //System.out.println(secondDfs);
+    System.out.println(secondDfs);
 
     System.out.println("Component count");
     System.out.println(strongComponentCount);
@@ -83,80 +83,39 @@ public class Kosaraju {
     return graph;
   }
 
-  private static long dfs(TreeMap<Long, Node> map, Stack<Node> nodeStack, TreeSet<Long> explNodeIdSet) {
+  private static void dfs(TreeMap<Long, Node> map, Stack<Node> nodeStack, TreeSet<Long> explNodeIdSet) {
 
-    if(nodeStack.isEmpty() && explNodeIdSet.isEmpty()) {
-      //initialization
-      //put biggest node to queue
-      nodeStack.push(map.lastEntry().getValue());
-      //System.out.println("starts with " + nodeStack.peek().getNodeIndex());
-    } else if(nodeStack.isEmpty()) {
-      //System.out.println("!!!");
-      strongComponentCount++;
-      if(componentSizeMap.isEmpty()) {
-        componentSizeMap.put(strongComponentCount, Long.valueOf(explNodeIdSet.size()));
-      } else {
-        componentSizeMap.put(strongComponentCount, explNodeIdSet.size() - accSize);
+      while(explNodeIdSet.size() < map.values().size()) {
+        nodeStack.push(map.get(getNextNonExplored(map, explNodeIdSet)));
+        explNodeIdSet.add(nodeStack.peek().getNodeIndex());
+
+        while (!nodeStack.isEmpty()) {
+          System.out.println(dfsIndex);
+          Node node = nodeStack.pop();
+          List<Node> connectedNodes = node.getConnectedNodes().stream().filter(n -> !explNodeIdSet.contains(n.getNodeIndex())).collect(Collectors.toList());
+
+          if(connectedNodes.isEmpty()) {
+            node.setDfsIndex(++dfsIndex);
+            continue;
+          } else {
+            nodeStack.push(node);
+            connectedNodes.forEach(n -> {
+              nodeStack.push(n);
+              explNodeIdSet.add(n.getNodeIndex());
+            });
+          }
+        }
+
+        strongComponentCount++;
+        if(componentSizeMap.isEmpty()) {
+          componentSizeMap.put(strongComponentCount, Long.valueOf(explNodeIdSet.size()));
+        } else {
+          componentSizeMap.put(strongComponentCount, explNodeIdSet.size() - accSize);
+        }
+        accSize = explNodeIdSet.size();
       }
-
-      if(explNodeIdSet.size() != map.keySet().size()) {
-        Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
-        nodeStack.push(map.get(nextNonExplored));
-        explNodeIdSet.add(nextNonExplored);
-      } else {
-        return explNodeIdSet.first();
-      }
-    }
-
-    //get last node from the queue
-    Node node = map.get(nodeStack.pop().getNodeIndex());
-    //System.out.println("goes to " + node.getNodeIndex());
-    //map as explored
-    node.setExplored(true);
-    //add to explored node set
-    explNodeIdSet.add(node.getNodeIndex());
-
-    //get all connected non-explored nodes
-    //List<Node> connectedNodes = node
-      //.getConnectedNodes()
-      //.stream()
-      //.filter(n -> !n.isExplored())
-      //.filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
-      //.collect(Collectors.toList());
-    //System.out.println(connectedNodes.size() + " non-explored nodes");
-
-    //if no connected nodes found
-    if(getConnectedUnexploredNodes(node, explNodeIdSet).isEmpty()) {
-      //System.out.println("no connected nodes found");
-      //if empty dfs index, put one
-      if(node.getDfsIndex() == null) {
-        node.setDfsIndex(Long.valueOf(++dfsIndex));
-        //System.out.println("dfs increased " + dfsIndex);
-        //System.out.println(node);
-      }
-    } else {
-
-      //if connected nodes found
-      //put node and connected nodes to stack
-      //System.out.println("connected nodes found");
-      nodeStack.push(node);
-      getConnectedUnexploredNodes(node, explNodeIdSet).forEach(n -> nodeStack.push(n));
-    }
-
-    //recurse
-    dfs(map, nodeStack, explNodeIdSet);
-    return explNodeIdSet.first();
   }
   
-  private static List<Node> getConnectedUnexploredNodes(Node node, Set<Long> explNodeIdSet) {
-    return node
-      .getConnectedNodes()
-      .stream()
-      .filter(n -> !n.isExplored())
-      .filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
-      .collect(Collectors.toList());
-  }
-
   private static Long getNextNonExplored(TreeMap<Long, Node> map, TreeSet<Long> explNodeIdSet) {
     NavigableSet<Long> nSet = ((NavigableSet) map.keySet()).descendingSet();
 
