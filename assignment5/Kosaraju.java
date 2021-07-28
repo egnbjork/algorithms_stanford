@@ -9,6 +9,7 @@ public class Kosaraju {
   private static int strongComponentCount = 0;
   private static Map<Integer, Long> componentSizeMap = new HashMap<>();
   private static long accSize = 0;
+  private static long totalSize = 0;
 
   public static void main(String[] arg) {
     if(arg.length != 1) {
@@ -19,7 +20,8 @@ public class Kosaraju {
 
     TreeMap<Long, Node> nodeMap = nodesFromFile(fileName);
     System.out.println("\nloaded from file");
-    //System.out.println(nodeMap);
+    totalSize = nodeMap.values().size();
+    System.out.println(totalSize + " graphs");
 
     TreeMap<Long, Node> reversedGraph = reverseGraph(nodeMap);
     System.out.println("\nreversed");
@@ -89,27 +91,21 @@ public class Kosaraju {
       nodeStack.push(map.lastEntry().getValue());
       //System.out.println("starts with " + nodeStack.peek().getNodeIndex());
     } else if(nodeStack.isEmpty()) {
-        System.out.println("!!!");
-        long componentSize;
-        if(componentSizeMap.isEmpty()) {
-          componentSize = explNodeIdSet.size();
-        } else {
-          componentSize = explNodeIdSet.size() - accSize;
-        }
+      //System.out.println("!!!");
+      strongComponentCount++;
+      if(componentSizeMap.isEmpty()) {
+        componentSizeMap.put(strongComponentCount, Long.valueOf(explNodeIdSet.size()));
+      } else {
+        componentSizeMap.put(strongComponentCount, explNodeIdSet.size() - accSize);
+      }
 
-        accSize = explNodeIdSet.size();
-        System.out.println(componentSize);
-     
-        strongComponentCount++;
-        componentSizeMap.put(strongComponentCount, componentSize);
-
-        if(explNodeIdSet.size() != map.keySet().size()) {
-          Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
-          nodeStack.push(map.get(nextNonExplored));
-          explNodeIdSet.add(nextNonExplored);
-        } else {
-          return explNodeIdSet.first();
-        }
+      if(explNodeIdSet.size() != map.keySet().size()) {
+        Long nextNonExplored = getNextNonExplored(map, explNodeIdSet);
+        nodeStack.push(map.get(nextNonExplored));
+        explNodeIdSet.add(nextNonExplored);
+      } else {
+        return explNodeIdSet.first();
+      }
     }
 
     //get last node from the queue
@@ -121,16 +117,16 @@ public class Kosaraju {
     explNodeIdSet.add(node.getNodeIndex());
 
     //get all connected non-explored nodes
-    List<Node> connectedNodes = node
-      .getConnectedNodes()
-      .stream()
-      .filter(n -> !n.isExplored())
-      .filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
-      .collect(Collectors.toList());
+    //List<Node> connectedNodes = node
+      //.getConnectedNodes()
+      //.stream()
+      //.filter(n -> !n.isExplored())
+      //.filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
+      //.collect(Collectors.toList());
     //System.out.println(connectedNodes.size() + " non-explored nodes");
 
     //if no connected nodes found
-    if(connectedNodes.isEmpty()) {
+    if(getConnectedUnexploredNodes(node, explNodeIdSet).isEmpty()) {
       //System.out.println("no connected nodes found");
       //if empty dfs index, put one
       if(node.getDfsIndex() == null) {
@@ -138,21 +134,27 @@ public class Kosaraju {
         //System.out.println("dfs increased " + dfsIndex);
         //System.out.println(node);
       }
+    } else {
 
-      //recurse
-      dfs(map, nodeStack, explNodeIdSet);
-      return node.getNodeIndex();
+      //if connected nodes found
+      //put node and connected nodes to stack
+      //System.out.println("connected nodes found");
+      nodeStack.push(node);
+      getConnectedUnexploredNodes(node, explNodeIdSet).forEach(n -> nodeStack.push(n));
     }
-
-    //if connected nodes found
-    //put node and connected nodes to stack
-    //System.out.println("connected nodes found");
-    nodeStack.push(node);
-    connectedNodes.forEach(n -> nodeStack.push(n));
 
     //recurse
     dfs(map, nodeStack, explNodeIdSet);
     return explNodeIdSet.first();
+  }
+  
+  private static List<Node> getConnectedUnexploredNodes(Node node, Set<Long> explNodeIdSet) {
+    return node
+      .getConnectedNodes()
+      .stream()
+      .filter(n -> !n.isExplored())
+      .filter(n -> !explNodeIdSet.contains(n.getNodeIndex()))
+      .collect(Collectors.toList());
   }
 
   private static Long getNextNonExplored(TreeMap<Long, Node> map, TreeSet<Long> explNodeIdSet) {
