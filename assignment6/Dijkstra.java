@@ -12,6 +12,38 @@ public class Dijkstra {
   
     Map<Integer, Map<Integer, Integer>> fileMap = readFile(fileName);
     System.out.println(fileMap);
+
+    Map<Integer, Integer> shortestPaths = getShortestPaths(fileMap);
+    System.out.println(shortestPaths);
+  }
+
+  public static Map<Integer, Integer> getShortestPaths(Map<Integer, Map<Integer, Integer>> fileMap) {
+    Map<Integer, Integer> shortestPathsMap = new TreeMap<>();
+    Set<Integer> processedVertices = new TreeSet<>();
+
+    for(Map.Entry<Integer, Map<Integer, Integer>> mapEntry : fileMap.entrySet()) {
+      System.out.println("=== inspecting " + mapEntry.getKey());
+      if(processedVertices.isEmpty()) {
+        shortestPathsMap.put(mapEntry.getKey(), 0);
+      }
+      processedVertices.add(mapEntry.getKey());
+
+      for(Map.Entry<Integer, Integer> path : mapEntry.getValue().entrySet()) {
+
+        if(shortestPathsMap.containsKey(path.getKey()) &&
+           shortestPathsMap.get(path.getKey()) > path.getValue()) {
+          Integer lastPath = shortestPathsMap.get(path.getKey());
+          Integer newPath = shortestPathsMap.get(mapEntry.getKey()) + path.getValue();
+          shortestPathsMap.put(path.getKey(), newPath);
+        } else if(!shortestPathsMap.containsKey(path.getKey())) {
+          shortestPathsMap.put(path.getKey(), shortestPathsMap.get(mapEntry.getKey()) + path.getValue());
+        }
+      }
+      System.out.println(shortestPathsMap);
+    }
+
+    System.out.println(processedVertices);
+    return shortestPathsMap;
   }
   
   public static Map<Integer, Map<Integer, Integer>> readFile(String fileName) {
