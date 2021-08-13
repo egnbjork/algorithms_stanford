@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.*;
 import java.io.*;
 
 public class Dijkstra {
@@ -15,34 +16,53 @@ public class Dijkstra {
 
     Map<Integer, Integer> shortestPaths = getShortestPaths(fileMap);
     System.out.println(shortestPaths);
+    if(shortestPaths.size() == 200) {
+      System.out.print("\n\n" + shortestPaths.get(7) + ",");
+      System.out.print(shortestPaths.get(37) + ",");
+      System.out.print(shortestPaths.get(59) + ",");
+      System.out.print(shortestPaths.get(82) + ",");
+      System.out.print(shortestPaths.get(99) + ",");
+      System.out.print(shortestPaths.get(115) + ",");
+      System.out.print(shortestPaths.get(133) + ",");
+      System.out.print(shortestPaths.get(165) + ",");
+      System.out.print(shortestPaths.get(188) + ",");
+      System.out.print(shortestPaths.get(197));
+    }
   }
 
   public static Map<Integer, Integer> getShortestPaths(Map<Integer, Map<Integer, Integer>> fileMap) {
     Map<Integer, Integer> shortestPathsMap = new TreeMap<>();
-    Set<Integer> processedVertices = new TreeSet<>();
+    //start from first element
+    Map<Integer, Integer> heapMap = new LinkedHashMap<>();
+    heapMap.put(1,0);
+    shortestPathsMap.put(1,0);
 
-    for(Map.Entry<Integer, Map<Integer, Integer>> mapEntry : fileMap.entrySet()) {
-      System.out.println("=== inspecting " + mapEntry.getKey());
-      if(processedVertices.isEmpty()) {
-        shortestPathsMap.put(mapEntry.getKey(), 0);
-      }
-      processedVertices.add(mapEntry.getKey());
+    while(!heapMap.isEmpty()) {
+      Map.Entry<Integer, Integer> vx = heapMap.entrySet().iterator().next();
+      //System.out.println("vx: " + vx);
+      heapMap.remove(vx.getKey());
 
-      for(Map.Entry<Integer, Integer> path : mapEntry.getValue().entrySet()) {
+      Integer vxPath = shortestPathsMap.get(vx.getKey());
 
-        if(shortestPathsMap.containsKey(path.getKey()) &&
-           shortestPathsMap.get(path.getKey()) > path.getValue()) {
-          Integer lastPath = shortestPathsMap.get(path.getKey());
-          Integer newPath = shortestPathsMap.get(mapEntry.getKey()) + path.getValue();
-          shortestPathsMap.put(path.getKey(), newPath);
-        } else if(!shortestPathsMap.containsKey(path.getKey())) {
-          shortestPathsMap.put(path.getKey(), shortestPathsMap.get(mapEntry.getKey()) + path.getValue());
+      Map<Integer, Integer> paths = fileMap.get(vx.getKey()).entrySet()
+        .stream()
+        .collect(Collectors.toMap(e -> e.getKey(), 
+              e -> vxPath + e.getValue()));
+
+      //System.out.println(paths);
+      for(Map.Entry<Integer, Integer> path : paths.entrySet()) {
+
+        if(!shortestPathsMap.containsKey(path.getKey()) ||
+            shortestPathsMap.get(path.getKey()) > path.getValue()) {
+          heapMap.put(path.getKey(), path.getValue());
+          shortestPathsMap.put(path.getKey(), path.getValue());
         }
       }
-      System.out.println(shortestPathsMap);
+
+      //System.out.println("heap: " + heapMap);
+      //System.out.println("shortest paths: " + shortestPathsMap);
     }
 
-    System.out.println(processedVertices);
     return shortestPathsMap;
   }
   
