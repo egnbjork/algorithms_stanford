@@ -43,7 +43,14 @@ public class Job implements Comparable<Job> {
       thisScore = weight.doubleValue() - length.doubleValue();
       jobScore = job.getWeight().doubleValue() - job.getLength().doubleValue();
     }
-      return thisScore.compareTo(jobScore);
+
+    System.out.println("job score " + thisScore + " compare to " + jobScore);
+
+    if(thisScore.equals(jobScore)) {
+      return job.getWeight().compareTo(this.getWeight());
+    }
+
+    return jobScore.compareTo(thisScore);
   }
 
   public String toString() {

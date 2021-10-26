@@ -19,6 +19,26 @@ public class Greedy {
     List<Job> jobList = readFile(args[0], compareByRatio);
     Collections.sort(jobList);
     System.out.println(jobList);
+    System.out.println(calculateSum(jobList));
+  }
+
+  public static long calculateSum(List<Job> jobList) {
+    long sum = 0;
+    long completionTime  = 0;
+
+    for(Job job : jobList) {
+      long weight = job.getWeight(); 
+      completionTime += job.getLength();
+      System.out.println("job weight: " + weight);
+      System.out.println("job length: " + job.getLength());
+      System.out.println("job completion time: " + completionTime);
+      long score = weight * completionTime;
+      sum += score;
+      System.out.println("score is " + score);
+      System.out.println("sum is " + sum);
+    }
+
+    return sum;
   }
 
   private static List<Job> readFile(String fileName, boolean compareByRatio) {
@@ -44,6 +64,7 @@ public class Greedy {
       e.printStackTrace();
     }
 
+    System.out.println(jobList);
     return jobList;
   }
 }
