@@ -3,16 +3,25 @@ import java.util.*;
 
 public class Greedy {
   public static void main(String[] args) {
-    if(args.length < 1) {
+    if(args.length < 2) {
       System.out.println("not enough args are given");
       return;
     }
 
-    List<Job> jobList = readFile(args[0]);
+    boolean compareByRatio = Boolean.parseBoolean(args[1]);
+
+    if(compareByRatio) {
+      System.out.println("Compare by ratio");
+    } else {
+      System.out.println("Compare by difference");
+    }
+
+    List<Job> jobList = readFile(args[0], compareByRatio);
+    Collections.sort(jobList);
     System.out.println(jobList);
   }
 
-  private static List<Job> readFile(String fileName) {
+  private static List<Job> readFile(String fileName, boolean compareByRatio) {
     List<Job> jobList = new ArrayList<>();
 
     try {
@@ -29,7 +38,7 @@ public class Greedy {
         String[] job = currentLine.split(" ");
         long weight = Long.valueOf(job[0]);
         long length = Long.valueOf(job[1]);
-        jobList.add(new Job(weight, length));
+        jobList.add(new Job(weight, length, compareByRatio));
       } while(currentLine !=  null);
     } catch (Exception e) {
       e.printStackTrace();
