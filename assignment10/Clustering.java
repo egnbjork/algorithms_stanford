@@ -4,7 +4,7 @@ import java.util.stream.*;
 
 public class Clustering {
 
-  private static int nodes;;
+  private static int nodes;
 
   public static void main(String[] args) {
     if(args.length < 2) {
@@ -16,33 +16,51 @@ public class Clustering {
     System.out.println(clusterSize + " clustering");
     
     TreeSet<Distance> distanceSet = new Clustering().readFile(fileName);
+    System.out.println(distanceSet.size());
 
     Integer maxSpacing = cluster(distanceSet, clusterSize);
     System.out.println("max spacing: " + maxSpacing);
   }
 
   private static Integer cluster(TreeSet<Distance> distanceSet, Integer clusterSize) {
-    while(distanceSet.size() > clusterSize) {
-      System.out.println(distanceSet.size());
-      Distance firstEntry = distanceSet.pollFirst();
-      //System.out.println(firstEntry + " polled");
-      Iterator<Distance> it = distanceSet.iterator();
-      TreeSet<Distance> tempSet = new TreeSet<>();
-      while(it.hasNext()) {
-        Distance d = it.next();
-        //System.out.println(d);
-        //System.out.println(distanceSet);
-        if(d.node1 == firstEntry.node2) {
-          d.node1 = firstEntry.node1;
-        } else if(d.node2 == firstEntry.node2) {
-          d.node2 = firstEntry.node1;
-        }
-        tempSet.add(d);
+
+    List<Set<Integer>> clusterList = new ArrayList<>();
+    for(int i = 1; i <= nodes; i++) {
+      Set<Integer> node = new TreeSet<>();
+      node.add(i);
+      clusterList.add(node);
+    } 
+
+    while(clusterList.size() > clusterSize) {
+      Distance nextEntry = distanceSet.pollFirst();
+      System.out.println(nextEntry);
+      for (int i = 0; i < clusterList.size(); i++) {
+        Set<Integer> clusterNode = clusterList.get(i);
+        if (clusterNode.contains(nextEntry.node1)) {
+          //System.out.println("collection to merge");
+          Set<Integer> mergedCollection = clusterList.stream().filter(n -> n.contains(nextEntry.node1)).flatMap(p -> p.stream()).collect(Collectors.toSet());
+          Set<Integer> mergedCollection1 = clusterList.stream().filter(n -> n.contains(nextEntry.node2)).flatMap(p -> p.stream()).collect(Collectors.toSet());
+          //System.out.print(mergedCollection);
+          //clusterList.stream().filter(n -> n.contains(nextEntry.node1)).forEach(p -> System.out.print(p));
+          //System.out.println(" and " + mergedCollection1);
+          //System.out.println("---");
+          //clusterNode.add(nextEntry.node2);
+          mergedCollection.addAll(mergedCollection1);
+          clusterList.removeIf(n -> n.contains(nextEntry.node1) || n.contains(nextEntry.node2));
+          clusterList.add(mergedCollection);
+        } 
       }
-      distanceSet = tempSet;
+        System.out.println(clusterList.size());
+        //System.out.println(distanceSet);
+
+      if(clusterList.size() == clusterSize) {
+        //System.out.println("before");
+        //System.out.println(distanceSet);
+        distanceSet.removeIf(n -> clusterList.stream().filter(p -> p.contains(n.node1) && p.contains(n.node2)).findAny().isPresent());
+        //System.out.println("after");
+        //System.out.println(distanceSet);
+      }
     }
-    System.out.println(distanceSet.size());
-    System.out.println(distanceSet);
 
     return distanceSet.first().distance;
   }
