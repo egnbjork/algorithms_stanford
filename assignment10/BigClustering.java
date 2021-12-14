@@ -30,8 +30,32 @@ public class BigClustering {
 
   private static Map<Integer, List<BitSet>> cluster(Map<Integer, List<BitSet>> bitMap, int clusterSize) {
     Map<Integer, List<BitSet>> clusterMap = new TreeMap<>();
+    for(int i = 0; i <= clusterSize; i++) {
+      System.out.print("distance: " + i + " ");
+      Set<Integer> bfsSet = new TreeSet<>();
+      if(!bitMap.isEmpty()) {
+        //System.out.println(bfs(bfsSet, bitMap, bitMap.entrySet().iterator().next().getKey(), i));
+        System.out.println(bfs(bfsSet, bitMap, 1, 2));
+      }
+      break;
+    }
 
     return clusterMap;
+  }
+
+  private static Set<Integer> bfs(Set<Integer> bfsSet, Map<Integer, List<BitSet>> bitMap, int element, int distance) {
+    System.out.println("bitmap: " + bitMap.keySet());
+    System.out.println("key: " + element + " distance: " + distance);
+    if(bitMap.containsKey(element) && !bfsSet.contains(element)) {
+      bfsSet.add(element);
+    }
+
+     if(bitMap.containsKey(element + distance) && !bfsSet.contains(element + distance)) {
+       bfsSet.add(element + distance);
+       bfs(bfsSet, bitMap, element + distance, distance);
+     } 
+    System.out.println("bfsset: " + bfsSet);
+    return bfsSet;
   }
 
   private Map<Integer, List<BitSet>> readFile(String fileName) {
