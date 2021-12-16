@@ -8,69 +8,86 @@ public class BigClustering {
   private static int bitNumber;
 
   public static void main(String[] args) {
-    if(args.length < 2) {
+    if(args.length < 1) {
       System.out.println("not enough args are given");
       return;
     }
     String fileName = args[0];
-    Integer clusterSize = Integer.valueOf(args[1]);
-    System.out.println(clusterSize + " clustering");
 
     List<BitSet> distanceList = BigClustering.readFile(fileName);
-    //distanceList.forEach(n -> printBitSet(n));
 
-    cluster(distanceList, clusterSize);
+    cluster(distanceList);
   }
 
 
-  private static Set<Set<BitSet>> cluster(List<BitSet> bitList, int clusterSize) {
-    Set<Set<BitSet>> clusterSet = new HashSet<>();
-    Set<BitSet> bitSet = new HashSet<>(bitList);
+  private static Set<Set<BitSet>> cluster(List<BitSet> bitList) {
+    Set<Set<BitSet>> clusterSet = new LinkedHashSet<>();
+    Set<BitSet> bitSet = new LinkedHashSet<>(bitList);
+    System.out.println(bitList.size() + " values found");
+    System.out.println((bitSet.size()) + " 0-distance clustering");
 
-    for(int i = 0; i < bitList.size(); i++) {
-      if(bitSet.contains(bitList.get(i))) {
-        //printBitSet(bitList.get(i));
-        clusterSet.add(findChange(bitSet, bitList.get(i)));
+    for(BitSet bit : new LinkedHashSet<>(bitList)) {
+      if(bitSet.contains(bit)) {
+        clusterSet.add(findOneChange(bitSet, bit));
+      }
+    }
+    System.out.println(clusterSet.size() + " 1-distance clustering");
+    clusterSet.forEach(n -> {n.forEach(p -> System.out.print(bitSetToString(p))); System.out.print("| ");});
+    System.out.println("");
+
+    Set<Set<BitSet>> newClusterSet = new HashSet<>();
+
+    for(Set<BitSet> bss : clusterSet) {
+      for(BitSet bit : bss) {
+        newClusterSet.add(findTwoChanges(clusterSet, bit));
       }
     }
 
-    System.out.println("=======");
-    System.out.println("clusters found: " + clusterSet.size());
-    //clusterSet.forEach(n -> {System.out.println(""); n.forEach(p -> printBitSet(p));});
-    clusterSet.forEach(n -> System.out.println(n.size()));
+    System.out.println(newClusterSet.size() + " 2-distance clustering");
+    newClusterSet.forEach(n -> {System.out.println(""); n.forEach(p -> System.out.println(bitSetToString(p)));});
 
     return clusterSet;
   }
 
-  private static Set<BitSet> findChange(Set<BitSet> bitSet, BitSet bit) {
-    Set<BitSet> clusterSet = new HashSet<>();
+  private static Set<BitSet> findOneChange(Set<BitSet> bitSet, BitSet bit) {
+    Set<BitSet> clusterSet = new LinkedHashSet<>();
 
     if(bitSet.contains(bit)) {
       clusterSet.add(bit);
       bitSet.remove(bit);
     }
 
-    for(int i = 0; i < bitNumber; i++) {
+    for(int i = 0; i <= bitNumber; i++) {
       BitSet sb = (BitSet) bit.clone();
       sb.flip(i);
+
       if(bitSet.contains(sb)) {
         clusterSet.add(sb);
         bitSet.remove(sb);
       }
+    }
 
-      for(int n = 1; n < bitNumber; n++) {
-        BitSet sb1 = (BitSet) sb.clone();
-        sb1.flip(n);
-        if(bitSet.contains(sb1)) {
-          clusterSet.add(sb1);
-          bitSet.remove(sb1);
+    return clusterSet;
+  }
+
+  private static Set<BitSet> findTwoChanges(Set<Set<BitSet>> bitSet, BitSet bit) {
+    Set<Set<BitSet>> newBitSet = new LinkedHashSet<>();
+    for(int i = 0; i < bitNumber; i++) {
+      BitSet sb = (BitSet) bit.clone();
+      sb.flip(i);
+      for(int n = 0; n < bitNumber; n++) {
+        if(n != i) {
+          sb.flip(n);
+          for(Set<BitSet> bs : bitSet) {
+            if(bitSet.contains(sb)) {
+              //clusterSet.add(sb);
+              bs.remove(sb);
+            }
+          }
         }
       }
     }
-    System.out.println(clusterSet.size() + " elements found");
-    //clusterSet.forEach(n -> printBitSet(n));
-
-    return clusterSet;
+    return new HashSet<>();
   }
 
   private static Set<Integer> bfs(Set<Integer> bfsSet, Map<Integer, List<BitSet>> bitMap, int element, int distance) {
@@ -127,21 +144,11 @@ public class BigClustering {
     return t;
   }
 
-  private static void printBitSet(BitSet bs) {
+  private static String bitSetToString(BitSet bs) {
     StringBuilder sb = new StringBuilder(bs.length());
-    for (int i = bs.length() - 1; i >= 0; i--)
+    for (int i = bitNumber - 1; i >= 0; i--)
       sb.append(bs.get(i) ? 1 : 0);
-    sb.append("\n");
-    System.out.print(sb.toString());
-  }
-
-  private static int getHammingWeight(BitSet bitSet) {
-    int counter = 0;
-    for (byte aByte : bitSet.toByteArray()) {
-      for (int i = 0; i < 8; i++) {
-        counter += ((aByte & (0x01 << i)) >>> i);
-      }
-    }
-    return counter;
+    sb.append(" ");
+    return sb.toString();
   }
 }
