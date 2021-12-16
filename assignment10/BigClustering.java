@@ -5,7 +5,7 @@ import java.util.stream.*;
 
 public class BigClustering {
 
-  private static int nodes;
+  private static int bitNumber;
 
   public static void main(String[] args) {
     if(args.length < 2) {
@@ -16,31 +16,61 @@ public class BigClustering {
     Integer clusterSize = Integer.valueOf(args[1]);
     System.out.println(clusterSize + " clustering");
 
-    Map<Integer, List<BitSet>> distanceMap = new BigClustering().readFile(fileName);
-    //printBitSetMap(distanceMap);
-    System.out.println(distanceMap.size());
-    distanceMap.entrySet().stream().forEach(n -> System.out.println("key: " + n.getKey() + ", size: " + n.getValue().size()));
+    List<BitSet> distanceList = BigClustering.readFile(fileName);
+    //distanceList.forEach(n -> printBitSet(n));
 
-    Map<Integer, List<BitSet>> cluster = cluster(distanceMap, clusterSize);
-    cluster.entrySet().stream().forEach(n -> System.out.println("key: " + n.getKey() + ", size: " + n.getValue().size()));
-    //Integer maxSpacing = cluster(distanceSet, clusterSize);
-    //System.out.println("max spacing: " + maxSpacing);
+    cluster(distanceList, clusterSize);
   }
 
 
-  private static Map<Integer, List<BitSet>> cluster(Map<Integer, List<BitSet>> bitMap, int clusterSize) {
-    Map<Integer, List<BitSet>> clusterMap = new TreeMap<>();
-    for(int i = 0; i <= clusterSize; i++) {
-      System.out.print("distance: " + i + " ");
-      Set<Integer> bfsSet = new TreeSet<>();
-      if(!bitMap.isEmpty()) {
-        //System.out.println(bfs(bfsSet, bitMap, bitMap.entrySet().iterator().next().getKey(), i));
-        System.out.println(bfs(bfsSet, bitMap, 1, 2));
+  private static Set<Set<BitSet>> cluster(List<BitSet> bitList, int clusterSize) {
+    Set<Set<BitSet>> clusterSet = new HashSet<>();
+    Set<BitSet> bitSet = new HashSet<>(bitList);
+
+    for(int i = 0; i < bitList.size(); i++) {
+      if(bitSet.contains(bitList.get(i))) {
+        //printBitSet(bitList.get(i));
+        clusterSet.add(findChange(bitSet, bitList.get(i)));
       }
-      break;
     }
 
-    return clusterMap;
+    System.out.println("=======");
+    System.out.println("clusters found: " + clusterSet.size());
+    //clusterSet.forEach(n -> {System.out.println(""); n.forEach(p -> printBitSet(p));});
+    clusterSet.forEach(n -> System.out.println(n.size()));
+
+    return clusterSet;
+  }
+
+  private static Set<BitSet> findChange(Set<BitSet> bitSet, BitSet bit) {
+    Set<BitSet> clusterSet = new HashSet<>();
+
+    if(bitSet.contains(bit)) {
+      clusterSet.add(bit);
+      bitSet.remove(bit);
+    }
+
+    for(int i = 0; i < bitNumber; i++) {
+      BitSet sb = (BitSet) bit.clone();
+      sb.flip(i);
+      if(bitSet.contains(sb)) {
+        clusterSet.add(sb);
+        bitSet.remove(sb);
+      }
+
+      for(int n = 1; n < bitNumber; n++) {
+        BitSet sb1 = (BitSet) sb.clone();
+        sb1.flip(n);
+        if(bitSet.contains(sb1)) {
+          clusterSet.add(sb1);
+          bitSet.remove(sb1);
+        }
+      }
+    }
+    System.out.println(clusterSet.size() + " elements found");
+    //clusterSet.forEach(n -> printBitSet(n));
+
+    return clusterSet;
   }
 
   private static Set<Integer> bfs(Set<Integer> bfsSet, Map<Integer, List<BitSet>> bitMap, int element, int distance) {
@@ -58,42 +88,30 @@ public class BigClustering {
     return bfsSet;
   }
 
-  private Map<Integer, List<BitSet>> readFile(String fileName) {
-    Map<Integer, List<BitSet>> distanceMap = new TreeMap<>();
+  private static List<BitSet> readFile(String fileName) {
+    List<BitSet> distanceList = new ArrayList<>();
 
     try {
       BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
       String currentLine;
       currentLine = reader.readLine();
-      //System.out.println(currentLine);
+      bitNumber = Integer.valueOf(currentLine.split(" ")[1]);
 
       do {
         currentLine = reader.readLine();
         if(currentLine == null) break;
 
         String s = currentLine.replace(" ", "");
-        //System.out.println(s);
 
         BitSet t = stringToBitSet(s);
-        //printBitSet(t);
-        //System.out.println("");
-
-        int hammingWeight = getHammingWeight(t);
-        //System.out.println("weight is " + hammingWeight);
-        if(distanceMap.containsKey(hammingWeight)) {
-          distanceMap.get(hammingWeight).add(t);
-        } else {
-          List<BitSet> weightList = new ArrayList<>();
-          weightList.add(t);
-          distanceMap.put(hammingWeight, weightList);
-        }
+        distanceList.add(t);
       } while(currentLine !=  null);
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    return distanceMap;
+    return distanceList;
   }
 
   private static BitSet stringToBitSet(String s) {
@@ -109,23 +127,11 @@ public class BigClustering {
     return t;
   }
 
-  private static void printBitSetMap(Map<Integer, List<BitSet>> bitSetMap) {
-    for(Map.Entry<Integer, List<BitSet>> bitSet : bitSetMap.entrySet()) {
-      System.out.print(bitSet.getKey());
-      System.out.print("= {");
-      bitSet.getValue().forEach(n -> { 
-        printBitSet(n);
-        System.out.print(", ");
-      });
-      System.out.print("} ");
-    }
-    System.out.println("");
-  }
-
   private static void printBitSet(BitSet bs) {
     StringBuilder sb = new StringBuilder(bs.length());
     for (int i = bs.length() - 1; i >= 0; i--)
       sb.append(bs.get(i) ? 1 : 0);
+    sb.append("\n");
     System.out.print(sb.toString());
   }
 
