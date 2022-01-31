@@ -16,7 +16,7 @@ public class BigClustering {
 
     List<BitSet> distanceList = BigClustering.readFile(fileName);
 
-    cluster(distanceList);
+    System.out.println(cluster(distanceList).size());
   }
 
 
@@ -31,20 +31,9 @@ public class BigClustering {
         clusterSet.add(findOneChange(bitSet, bit));
       }
     }
-    System.out.println(clusterSet.size() + " 1-distance clustering");
+    System.out.println(clusterSet.size() + " 1-distance and 2-distance clustering");
     clusterSet.forEach(n -> {n.forEach(p -> System.out.print(bitSetToString(p))); System.out.print("| ");});
     System.out.println("");
-
-    Set<Set<BitSet>> newClusterSet = new HashSet<>();
-
-    for(Set<BitSet> bss : clusterSet) {
-      for(BitSet bit : bss) {
-        newClusterSet.add(findTwoChanges(clusterSet, bit));
-      }
-    }
-
-    System.out.println(newClusterSet.size() + " 2-distance clustering");
-    newClusterSet.forEach(n -> {System.out.println(""); n.forEach(p -> System.out.println(bitSetToString(p)));});
 
     return clusterSet;
   }
@@ -64,13 +53,26 @@ public class BigClustering {
       if(bitSet.contains(sb)) {
         clusterSet.add(sb);
         bitSet.remove(sb);
+        System.out.println("1 distance found");
       }
+      for(int n = 0; n <= bitNumber; n++) {
+        if(n != i) {
+          BitSet sb1 = (BitSet) sb.clone(); 
+          sb1.flip(n);
+          if(bitSet.contains(sb1)) {
+            clusterSet.add(sb1);
+            bitSet.remove(sb1);
+            System.out.println("2 distance found");
+          }
+        }
+      }
+
     }
 
     return clusterSet;
   }
 
-  private static Set<BitSet> findTwoChanges(Set<Set<BitSet>> bitSet, BitSet bit) {
+  private static Set<Set<BitSet>> findTwoChanges(Set<Set<BitSet>> bitSet, BitSet bit) {
     Set<Set<BitSet>> newBitSet = new LinkedHashSet<>();
     for(int i = 0; i < bitNumber; i++) {
       BitSet sb = (BitSet) bit.clone();
@@ -150,5 +152,15 @@ public class BigClustering {
       sb.append(bs.get(i) ? 1 : 0);
     sb.append(" ");
     return sb.toString();
+  }
+
+  private static int getHammingWeight(BitSet bitSet) {
+    int counter = 0;
+    for (byte aByte : bitSet.toByteArray()) {
+      for (int i = 0; i < 8; i++) {
+        counter += ((aByte & (0x01 << i)) >>> i);
+      }
+    }
+    return counter;
   }
 }
