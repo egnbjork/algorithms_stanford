@@ -51,6 +51,7 @@ public class ShortestPaths {
 
         list.set(0, Long.MIN_VALUE);
         for (int p = 0; p <= edgeCount; p++) {
+          //System.out.println(p + " " + startingPoint + "/"  + edgeCount);
             bellmanFord(map, list, startingPoint);
             if (p == edgeCount && doesHaveNegativeCycle(map, list)) {
                 System.out.println("Negative Cycle found!!! starting point " + startingPoint + " of " + edgeCount);
