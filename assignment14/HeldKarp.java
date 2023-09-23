@@ -1,13 +1,11 @@
 import java.util.*;
 import java.util.stream.*;
 import java.io.*;
+import java.lang.Math.*;
 
 public class HeldKarp {
-  //add first city to hashtable with coordinates
-  //add second city to hashtable with coordinates
-  //calculate distance + add to distance table
-  //add third city to hashtable with coordinates
-  //add third city to every entry in hashtable with distances + swap to get all permutations (ABC ACB CAB)
+
+  private static String firstCity;
 
   public static void main(String[] args) {
     if (args.length < 1) {
@@ -17,6 +15,23 @@ public class HeldKarp {
     Map<String, Map<Double, Double>> citiesCoords = readFile(args[0]);
 
     Map<String, Double> shortestPaths = shortestPaths(citiesCoords);
+    
+    System.out.println(shortestPaths);
+    Integer pathLength = shortestPaths.keySet()
+      .stream()
+      .sorted(Comparator.comparing(n -> n.length()))
+      .reduce((first, second) -> second)
+      .orElseThrow(() -> new IllegalStateException("paths are empty")).length();
+
+    String shortestPathRoute = shortestPaths
+      .entrySet()
+      .stream()
+      .filter(n -> n.getKey().length() == pathLength)
+      .sorted(Map.Entry.comparingByValue())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+      .entrySet().iterator().next().getKey();
+
+    System.out.println("\n\n ====>>> Shortest path route is " + shortestPathRoute + " ( " + shortestPaths.get(shortestPathRoute) + " ) ");
   }
 
   private static Map<String, Double> shortestPaths(Map<String, Map<Double, Double>> citiesCoords) {
@@ -26,6 +41,7 @@ public class HeldKarp {
       addCity(paths, citiesCoords, city);
       System.out.println(city);
     }
+    addCity(paths, citiesCoords, firstCity);
     System.out.println(paths);
     return paths;
   }
@@ -39,16 +55,48 @@ public class HeldKarp {
       return paths;
     }
 
-    //fill distance table between two cities
-    // generate all available variations
     List<String> combinations = getAllCombinations(newCityName, paths.keySet());
-    //fill distance for each combination
 
     for(String combination : combinations) {
-      paths.put(combination, Double.valueOf(0));
+      if(combination.length() == 2) {
+        //System.out.println("calculate new distance for " + combination + " (" + combination.charAt(0) + combination.charAt(1) + ")");
+        //System.out.println(citiesCoords.get(String.valueOf(combination.charAt(0))) + " " +
+              //citiesCoords.get(String.valueOf(combination.charAt(1))));
+        paths.put(combination,
+            calculateDistance(citiesCoords.get(String.valueOf(combination.charAt(0))),
+              citiesCoords.get(String.valueOf(combination.charAt(1)))));
+        //System.out.println(paths.get(combination));
+      } else if(combination.startsWith(newCityName)) {
+        //System.out.println("combination " + combination + " starts with " + newCityName);
+        double val1 = paths.get(newCityName + combination.charAt(1));
+        double val2 = paths.get(combination.substring(1));
+        //System.out.println("find distance for " + combination + " (" + newCityName + combination.charAt(1)  + " + " + combination.substring(1) + ")");
+        //System.out.println(paths);
+        paths.put(combination, val1 + val2);
+      } else if (combination.endsWith(newCityName)) {
+        //System.out.println("combination " + combination + " ends with " + newCityName);
+        //System.out.println("find distance for " + combination + " (" + combination.substring(0, combination.length() - 1)  + " + " + combination.charAt(combination.length() - 2) + newCityName);
+        double val1 = paths.get(combination.substring(0, combination.length() - 1));
+        double val2 = paths.get(combination.charAt(combination.length() - 2) + newCityName);
+        paths.put(combination, val1 + val2);
+      } else {
+        System.out.println("combination " + combination + " has " + newCityName + " in the middle");
+        //System.out.println("find distance for " + combination.substring(0, combination.indexOf(newCityName) + 1) + " + " + combination.substring(combination.indexOf(newCityName), combination.length()));
+        double val1 = paths.get(combination.substring(0, combination.indexOf(newCityName) + 1));
+        double val2 = paths.get(combination.substring(combination.indexOf(newCityName), combination.length()));
+        paths.put(combination, val1 + val2);
+      }
     }
 
     return paths;
+  }
+
+  private static double calculateDistance(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
+    double x = firstCity.keySet().iterator().next();
+    double y = firstCity.values().iterator().next();
+    double z = secondCity.keySet().iterator().next();
+    double w = secondCity.values().iterator().next();
+    return Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w)));
   }
 
   private static List<String> getAllCombinations(String cityName, Set<String> paths) {
@@ -56,10 +104,11 @@ public class HeldKarp {
       .stream()
       .sorted(Comparator.comparing(n -> n.length()))
       .reduce((first, second) -> second)
-      .orElseThrow(() -> new IllegalArgumentException("paths are empty"));
+      .orElseThrow(() -> new IllegalStateException("paths are empty"));
 
-      System.out.println("latest entry is " + latestPath);
+      //System.out.println("latest entry is " + latestPath);
       if(latestPath.length() == 1) {
+        firstCity = latestPath;
         paths.remove(latestPath);
       }
 
@@ -67,6 +116,7 @@ public class HeldKarp {
 
       for(int i = 65; i < cityName.charAt(0); i++) {
         combinations.add((char)i + cityName);
+        combinations.add(cityName + (char)i);
       }
 
       List<String> cityPathsToConsider = paths.stream()
@@ -81,22 +131,33 @@ public class HeldKarp {
           cityPathArr[1] = m;
           cityPathsToConsider.add(new String(cityPathArr));
       }
-      System.out.println("city paths to consider: " + cityPathsToConsider);
+      //System.out.println("city paths to consider: " + cityPathsToConsider);
 
-      for(String cityPath : cityPathsToConsider) {
-        System.out.println(cityPath);
-        combinations.add(cityName + cityPath);
-        cityPath = cityPath + cityName;
-        for(int i = 1; i < cityPath.length(); i++) {
-          char[] cityPathArr = cityPath.toCharArray();
-          Character m = cityPathArr[i - 1];
-          cityPathArr[i - 1] = cityPathArr[i];
-          cityPathArr[i] = m;
-          combinations.add(new String(cityPathArr));
+      if(!cityPathsToConsider.isEmpty() &&
+          cityPathsToConsider.get(0).indexOf(cityName) >= 0) {
+        //System.out.println("go back to the home city");
+        for(String cityPath : cityPathsToConsider) {
+          //System.out.println(cityPath + cityName);
+          if(!cityPath.endsWith(cityName)) {
+            combinations.add(cityPath + cityName);
+          }
+        }
+      } else {
+        for(String cityPath : cityPathsToConsider) {
+          //System.out.println(cityPath);
+          combinations.add(cityName + cityPath);
+          cityPath = cityPath + cityName;
+          for(int i = 1; i < cityPath.length(); i++) {
+            char[] cityPathArr = cityPath.toCharArray();
+            Character m = cityPathArr[i - 1];
+            cityPathArr[i - 1] = cityPathArr[i];
+            cityPathArr[i] = m;
+            combinations.add(new String(cityPathArr));
+          }
         }
       }
 
-      System.out.println("combinations are: " + combinations);
+      //System.out.println("combinations are: " + combinations);
       return combinations;
   }
 
@@ -111,7 +172,7 @@ public class HeldKarp {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    System.out.println("Found " +  coords.size() + " cities");
+    //System.out.println("Found " +  coords.size() + " cities");
 
     for (int i = 0; i < coords.size(); i++) {
       Character cityName = (char) (65 + i);
