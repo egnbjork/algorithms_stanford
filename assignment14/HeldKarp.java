@@ -13,11 +13,24 @@ public class HeldKarp {
             System.out.println("Please provide file name");
             return;
         }
-        List<String> citiesCoords = readFile(args[0]);
-        System.out.println(citiesCoords);
+        Map<String, Map<Double, Double>> citiesCoords = readFile(args[0]);
+
+        //Map<String, Double> distanceTable = calcCityDistance(citiesCoords);
   }
 
-    private static List<String> readFile(String filename) {
+    private static Map<String, Double> calcCityDistance(List<String> citiesCoords) {
+        Map<String, Double> distanceTable = new HashMap<>();
+        for (int i = 0; i < citiesCoords.size(); i++) {
+          Character cityName = (char) (65 + i);
+          distanceTable.put(String.valueOf(cityName), Double.valueOf(0));
+        }
+
+        System.out.println(distanceTable);
+        return distanceTable;
+    }
+
+    private static Map<String, Map<Double, Double>> readFile(String filename) {
+      Map<String, Map<Double, Double>> map = new HashMap<>();
       List<String> coords = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line = br.readLine();
@@ -27,6 +40,16 @@ public class HeldKarp {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return coords;
+        System.out.println("Found " +  coords.size() + " cities");
+
+        for (int i = 0; i < coords.size(); i++) {
+          Character cityName = (char) (65 + i);
+          String[] cityCoords = coords.get(i).split(" ");
+          map.put(String.valueOf(cityName), Map.of(Double.valueOf(cityCoords[0]), 
+                Double.valueOf(cityCoords[1])));
+        }
+
+        System.out.println(map);
+        return map;
     }
 }
