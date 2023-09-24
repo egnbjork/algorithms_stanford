@@ -74,16 +74,23 @@ public class HeldKarp {
         //System.out.println(paths);
         paths.put(combination, val1 + val2);
       } else if (combination.endsWith(newCityName)) {
-        //System.out.println("combination " + combination + " ends with " + newCityName);
-        //System.out.println("find distance for " + combination + " (" + combination.substring(0, combination.length() - 1)  + " + " + combination.charAt(combination.length() - 2) + newCityName);
-        double val1 = paths.get(combination.substring(0, combination.length() - 1));
-        double val2 = paths.get(combination.charAt(combination.length() - 2) + newCityName);
+        String firstPathName = combination.substring(0, combination.length() - 1);
+        String secondPathName = combination.charAt(combination.length() - 2) + newCityName;
+        System.out.println("combination " + combination + " ends with " + newCityName);
+        System.out.println("find distance for " + combination + " (" + firstPathName  + " + " + secondPathName + ")");
+        double val1 = paths.get(firstPathName);
+        double val2 = paths.get(secondPathName);
         paths.put(combination, val1 + val2);
       } else {
+        String firstPathName = combination.substring(0, combination.indexOf(newCityName));
+        if (firstPathName.length() == 1) {
+          firstPathName = firstPathName + newCityName;
+        }
+        String secondPathName = combination.substring(combination.indexOf(newCityName), combination.length());
         System.out.println("combination " + combination + " has " + newCityName + " in the middle");
-        //System.out.println("find distance for " + combination.substring(0, combination.indexOf(newCityName) + 1) + " + " + combination.substring(combination.indexOf(newCityName), combination.length()));
-        double val1 = paths.get(combination.substring(0, combination.indexOf(newCityName) + 1));
-        double val2 = paths.get(combination.substring(combination.indexOf(newCityName), combination.length()));
+        System.out.println("find distance for " + firstPathName + " + " + secondPathName);
+        double val1 = paths.get(firstPathName);
+        double val2 = paths.get(secondPathName);
         paths.put(combination, val1 + val2);
       }
     }
@@ -144,7 +151,7 @@ public class HeldKarp {
         }
       } else {
         for(String cityPath : cityPathsToConsider) {
-          //System.out.println(cityPath);
+          System.out.println("city path " + cityPath);
           combinations.add(cityName + cityPath);
           cityPath = cityPath + cityName;
           for(int i = 1; i < cityPath.length(); i++) {
@@ -157,7 +164,7 @@ public class HeldKarp {
         }
       }
 
-      //System.out.println("combinations are: " + combinations);
+      System.out.println("combinations are: " + combinations);
       return combinations;
   }
 
