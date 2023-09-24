@@ -23,15 +23,18 @@ public class HeldKarp {
       .reduce((first, second) -> second)
       .orElseThrow(() -> new IllegalStateException("paths are empty")).length();
 
-    String shortestPathRoute = shortestPaths
+    Map.Entry<String, Double> shortestPathRoute = shortestPaths
       .entrySet()
       .stream()
+      .filter(n -> n.getKey().startsWith("A"))
       .filter(n -> n.getKey().length() == pathLength)
       .sorted(Map.Entry.comparingByValue())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-      .entrySet().iterator().next().getKey();
+      .reduce((first, second) -> first)
+      .orElseThrow(() -> new IllegalStateException("Something is wrong"));
+      //.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      //.entrySet().iterator().next().getKey();
 
-    System.out.println("\n\n ====>>> Shortest path route is " + shortestPathRoute + " ( " + shortestPaths.get(shortestPathRoute) + " ) ");
+    System.out.println("\n\n ====>>> Shortest path route is " + shortestPathRoute);
   }
 
   private static Map<String, Double> shortestPaths(Map<String, Map<Double, Double>> citiesCoords) {
@@ -50,7 +53,7 @@ public class HeldKarp {
       Map<String, Map<Double, Double>> citiesCoords,
       String newCityName,
       Boolean homeCity) {
-    System.out.println("add city " + newCityName + " to the list " + paths);
+    System.out.println("add city " + newCityName  + "(" + citiesCoords.get(newCityName) + ") to the list " + paths);
     if(paths.isEmpty()) {
       paths.put(newCityName, Double.valueOf(0));
       return paths;
@@ -105,6 +108,8 @@ public class HeldKarp {
     double y = firstCity.values().iterator().next();
     double z = secondCity.keySet().iterator().next();
     double w = secondCity.values().iterator().next();
+    System.out.println("(" + x + "," + y + ") and (" + z + "," + w + ")");
+    System.out.println( Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w))));
     return Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w)));
   }
 
@@ -191,6 +196,7 @@ public class HeldKarp {
     for (int i = 0; i < coords.size(); i++) {
       Character cityName = (char) (65 + i);
       String[] cityCoords = coords.get(i).split(" ");
+      System.out.println(coords);
       map.put(String.valueOf(cityName), Map.of(Double.valueOf(cityCoords[0]), 
             Double.valueOf(cityCoords[1])));
     }
