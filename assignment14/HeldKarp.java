@@ -138,11 +138,11 @@ public class HeldKarp {
           cityPathArr[1] = m;
           cityPathsToConsider.add(new String(cityPathArr));
       }
-      //System.out.println("city paths to consider: " + cityPathsToConsider);
+      System.out.println("city paths to consider: " + cityPathsToConsider);
 
       if(!cityPathsToConsider.isEmpty() &&
           cityPathsToConsider.get(0).indexOf(cityName) >= 0) {
-        //System.out.println("go back to the home city");
+        System.out.println("go back to the home city");
         for(String cityPath : cityPathsToConsider) {
           //System.out.println(cityPath + cityName);
           if(!cityPath.endsWith(cityName)) {
@@ -151,15 +151,18 @@ public class HeldKarp {
         }
       } else {
         for(String cityPath : cityPathsToConsider) {
-          System.out.println("city path " + cityPath);
-          combinations.add(cityName + cityPath);
-          cityPath = cityPath + cityName;
+          //System.out.println("city path " + cityPath);
+          combinations.add(cityPath + cityName);
+          System.out.println("combination " + new String(cityName + cityPath));
+          cityPath = cityName + cityPath;
+          char[] cityPathArr = cityPath.toCharArray();
           for(int i = 1; i < cityPath.length(); i++) {
-            char[] cityPathArr = cityPath.toCharArray();
             Character m = cityPathArr[i - 1];
             cityPathArr[i - 1] = cityPathArr[i];
+            System.out.println("swap " + m + " with " + cityPathArr[i]);
             cityPathArr[i] = m;
             combinations.add(new String(cityPathArr));
+            System.out.println("combination " + new String(cityPathArr));
           }
         }
       }
