@@ -30,7 +30,8 @@ public class HeldKarp {
 
     Map<String, Double> shortestPaths = shortestPaths(citiesCoords);
 
-    // System.out.println(shortestPaths);
+    // if(debug) System.out.println(shortestPaths);
+
     Integer pathLength = shortestPaths.keySet()
       .stream()
       .sorted(Comparator.comparing(n -> n.length()))
@@ -48,13 +49,13 @@ public class HeldKarp {
     //.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     //.entrySet().iterator().next().getKey();
 
-    // System.out.println("\n\n ====>>> Shortest path route is " + shortestPathRoute);
+    if (debug) System.out.println("\n\n ====>>> Shortest path route is " + shortestPathRoute);
 
     if(solution != null) {
       DecimalFormat df = new DecimalFormat("#.##");
       String expectedResult = String.valueOf(solution);
       String actualResult = df.format(shortestPathRoute.getValue());
-  
+
       if(!actualResult.equals(expectedResult)) {
         System.out.println("got " + actualResult + " while expecting " + expectedResult + " in test case " + filename);
         System.exit(0);
@@ -67,10 +68,10 @@ public class HeldKarp {
 
     for(String city : citiesCoords.keySet()) {
       addCity(paths, citiesCoords, city, false);
-      // System.out.println(city);
+      if (debug) System.out.println(city);
     }
     addCity(paths, citiesCoords, firstCity, true);
-    // System.out.println(paths);
+    // if (debug) System.out.println(paths);
     return paths;
   }
 
@@ -78,7 +79,12 @@ public class HeldKarp {
                                              Map<String, Map<Double, Double>> citiesCoords,
                                              String newCityName,
                                              Boolean homeCity) {
-    // System.out.println("add city " + newCityName  + "(" + citiesCoords.get(newCityName) + ") to the list " + paths);
+    if (debug) System.out.println(
+        "add city " + newCityName  + ", " + 
+        (((int)(newCityName.charAt(0))) - 64) + 
+        " (" + citiesCoords.get(newCityName) + 
+        ") to the list of size " + paths.keySet().size()
+      );
     if(paths.isEmpty()) {
       paths.put(newCityName, Double.valueOf(0));
       return paths;
@@ -232,11 +238,4 @@ public class HeldKarp {
 
     return map;
   }
-  
-  private static void debug(String logString) {
-    if (debug) {
-      System.out.println(logString);
-    }
-  }
 }
-  
