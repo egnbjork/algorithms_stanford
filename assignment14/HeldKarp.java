@@ -124,11 +124,16 @@ public class HeldKarp {
           firstPathName = firstPathName + newCityName;
         }
         String secondPathName = combination.substring(combination.indexOf(newCityName), (combination.indexOf(newCityName) + 2));
+        String thirdPathName = combination.substring(combination.indexOf(newCityName) + 1, combination.length());
         // System.out.println("combination " + combination + " has " + newCityName + " in the middle");
         // System.out.println("find distance for " + firstPathName + " + " + secondPathName);
         double val1 = paths.get(firstPathName);
         double val2 = paths.get(secondPathName);
-        paths.put(combination, val1 + val2);
+        double val3 = 0;
+        if(thirdPathName.length() > 1){
+              val3 = paths.get(thirdPathName);
+        }
+        paths.put(combination, val1 + val2 + val3);
       }
     }
     return paths;
