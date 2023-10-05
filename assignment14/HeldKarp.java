@@ -1,6 +1,5 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,36 +30,55 @@ public class HeldKarp {
         Map<String, Double> paths = new HashMap<>();
 
         for (Map.Entry<String, Map<Double, Double>> city : citiesCoords.entrySet()) {
-            addCity(paths, city);
+            addCity(paths, citiesCoords, city.getKey());
             System.out.println(city);
         }
         System.out.println(paths);
     }
 
     private static void addCity(Map<String, Double> paths,
-                                Map.Entry<String, Map<Double, Double>> city) {
-        System.out.println(paths);
-        paths.put(city.getKey(), 0d);
+                                Map<String, Map<Double, Double>> citiesCoords,
+                                String city) {
+        paths.put(city, 0d);
         if (paths.size() < 2) {
             return;
         }
-        System.out.println("Add city " + city.getKey());
+        System.out.println("Add city " + city);
         List<String> pathsList = new ArrayList<>(paths.keySet());
         for (String s : pathsList) {
             //to prevent paths from yourself (like AA, BB etc.)
-            if (s.equals(city.getKey())) continue;
+            if (s.equals(city)) continue;
 
-            String newPath = s + city.getKey();
+            String newPath = s + city;
             List<String> combinations = permute(newPath);
             for (String combination : combinations) {
-                if(!paths.containsKey(combination)) {
-                    paths.put(combination, 1d);
+                if (!paths.containsKey(combination)) {
+                    paths.put(combination, calculateDistance(combination, citiesCoords, paths));
                 }
             }
         }
     }
 
-    public static List<String> permute(String input) {
+    private static double calculateDistance(String combination,
+                                            Map<String, Map<Double, Double>> citiesCoords,
+                                            Map<String, Double> paths) {
+        if(combination.length() == 2) {
+            char firstCity = combination.charAt(0);
+            char secondCity = combination.charAt(1);
+            return calculateDistancePair(citiesCoords.get(Character.toString(firstCity)),
+                    citiesCoords.get(Character.toString(secondCity)));
+        }
+        return 0L;
+    }
+    private static double calculateDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
+        double x = firstCity.keySet().iterator().next();
+        double y = firstCity.values().iterator().next();
+        double z = secondCity.keySet().iterator().next();
+        double w = secondCity.values().iterator().next();
+        return Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w)));
+    }
+
+    private static List<String> permute(String input) {
         List<String> permutations = new ArrayList<>();
         generatePermutationsRecursive("", input, permutations);
         return permutations;
@@ -79,6 +97,7 @@ public class HeldKarp {
             }
         }
     }
+
     private static Map<String, Map<Double, Double>> readFile(String filename) {
         Map<String, Map<Double, Double>> map = new HashMap<>();
         List<String> coords = new ArrayList<>();
