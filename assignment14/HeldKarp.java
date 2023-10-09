@@ -68,6 +68,18 @@ public class HeldKarp {
             return calculateDistancePair(citiesCoords.get(Character.toString(firstCity)),
                     citiesCoords.get(Character.toString(secondCity)));
         }
+        //for new city, calculate city +- 1 char (ABDC = AB + BD + DC)
+        //when new city added, first letter
+            //take first char with second char and add from second char to the end
+        //when new city added in the middle
+            //take first char to new city char minus one
+            //add new city char minus one
+            //add new city char plus one
+            // add from new city char plus one to the end
+        //when new city added in the end
+            //from beginning to new city char minus
+            //new city char minus one to new city char
+        //add A to the end
         return 0L;
     }
     private static double calculateDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
