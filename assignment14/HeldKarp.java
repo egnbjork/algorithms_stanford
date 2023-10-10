@@ -1,30 +1,36 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DecimalFormat;
+import java.util.*;
 
 public class HeldKarp {
-
-    private static boolean debug;
-    private static double solution;
+    private static long calculation = 0L;
+    private static String solution;
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            debug = false;
             for (int i = 1; i <= 7; i++) {
-                run("test" + i);
+                double actualValue = run("test" + i);
+                DecimalFormat df = new DecimalFormat("#.00");
+                String formattedValue = df.format(actualValue).replace(",", ".");
+                if (solution.equals(formattedValue)) {
+                    System.out.println("==================================================");
+                    System.out.println("test " + i + " passed!");
+                    System.out.println("==================================================\n\n\n\n");
+                } else {
+                    System.out.println("got " + formattedValue + " instead of " + solution);
+                    System.exit(0);
+                }
+
             }
         } else {
-            debug = true;
-            run(args[0]);
+            System.out.println(run(args[0]));
         }
 
         System.out.println("All done!");
     }
 
-    private static void run(String filename) {
+    private static double run(String filename) {
         System.out.println("run for " + filename);
         Map<String, Map<Double, Double>> citiesCoords = readFile(filename);
         Map<String, Double> paths = new HashMap<>();
@@ -33,7 +39,8 @@ public class HeldKarp {
             addCity(paths, citiesCoords, city.getKey());
             System.out.println(city);
         }
-        System.out.println(paths);
+
+        return getShortestPath(citiesCoords, paths);
     }
 
     private static void addCity(Map<String, Double> paths,
@@ -43,46 +50,102 @@ public class HeldKarp {
         if (paths.size() < 2) {
             return;
         }
-        System.out.println("Add city " + city);
+        System.out.println("Add city " + ((int) city.charAt(0) - 65) + " to " + paths.size() + " paths");
         List<String> pathsList = new ArrayList<>(paths.keySet());
         for (String s : pathsList) {
             //to prevent paths from yourself (like AA, BB etc.)
-            if (s.equals(city)) continue;
+            if (s.endsWith(city)) continue;
 
             String newPath = s + city;
             List<String> combinations = permute(newPath);
             for (String combination : combinations) {
                 if (!paths.containsKey(combination)) {
-                    paths.put(combination, calculateDistance(combination, citiesCoords, paths));
+                    paths.put(combination, computeDistance(combination, citiesCoords, city, paths));
                 }
             }
         }
     }
 
-    private static double calculateDistance(String combination,
-                                            Map<String, Map<Double, Double>> citiesCoords,
-                                            Map<String, Double> paths) {
-        if(combination.length() == 2) {
+    private static double getShortestPath(Map<String, Map<Double, Double>> citiesCoords,
+                                          Map<String, Double> paths) {
+        System.out.println("Going back home");
+        int maxPathLength = paths.keySet().stream()
+                .sorted(Comparator.comparing(String::length))
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new IllegalStateException("paths are empty")).length();
+        List<String> combinations = paths.keySet()
+                .stream()
+                .filter(n -> n.length() == maxPathLength)
+                .filter(n -> (n.startsWith("A") && (!n.endsWith("A"))))
+                .toList();
+
+        Map<String, Double> shortestPaths = new HashMap<>();
+        for (String finalCombination : combinations) {
+            shortestPaths.put(finalCombination + "A",
+                    computeDistance(finalCombination + "A", citiesCoords, "A", paths));
+        }
+
+        return shortestPaths.values().stream().sorted().findFirst().orElseThrow();
+    }
+
+    private static double computeDistance(String combination,
+                                          Map<String, Map<Double, Double>> citiesCoords,
+                                          String newCity,
+                                          Map<String, Double> paths) {
+
+        if (combination.length() == 2) {
             char firstCity = combination.charAt(0);
             char secondCity = combination.charAt(1);
-            return calculateDistancePair(citiesCoords.get(Character.toString(firstCity)),
+            return computeDistancePair(citiesCoords.get(Character.toString(firstCity)),
                     citiesCoords.get(Character.toString(secondCity)));
         }
-        //for new city, calculate city +- 1 char (ABDC = AB + BD + DC)
-        //when new city added, first letter
-            //take first char with second char and add from second char to the end
-        //when new city added in the middle
-            //take first char to new city char minus one
-            //add new city char minus one
-            //add new city char plus one
-            // add from new city char plus one to the end
-        //when new city added in the end
-            //from beginning to new city char minus
-            //new city char minus one to new city char
-        //add A to the end
-        return 0L;
+
+        String firstPath = "";
+        String secondPath = "";
+
+        if (combination.startsWith(newCity)) {
+            firstPath = combination.substring(0, 2);
+            secondPath = combination.substring(1);
+        } else if (combination.endsWith(newCity)) {
+            firstPath = combination.substring(0, combination.length() - 1);
+            secondPath = combination.substring(combination.length() - 2);
+        } else {
+            return computeNewDistance(combination, citiesCoords, paths);
+        }
+
+        return computeNewDistance(firstPath, citiesCoords, paths) +
+                computeNewDistance(secondPath, citiesCoords, paths);
     }
-    private static double calculateDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
+
+    private static double computeNewDistance(String combination,
+                                             Map<String, Map<Double, Double>> citiesCoords,
+                                             Map<String, Double> paths) {
+        if (combination.isEmpty()) return 0d;
+        if (paths.containsKey(combination)) {
+            return paths.get(combination);
+        }
+
+        double distance = 0;
+        String newCombination = combination;
+        while (newCombination.length() > 1) {
+            calculation++;
+            if(calculation % 10000 == 0) System.out.println(calculation);
+            String pathCut = newCombination.substring(0, 2);
+            double pathCutDistance = 0;
+            if (paths.containsKey(pathCut)) {
+                pathCutDistance = paths.get(pathCut);
+            } else {
+                pathCutDistance = computeDistancePair(citiesCoords.get(pathCut.charAt(0) + ""),
+                        citiesCoords.get(pathCut.charAt(1) + ""));
+                paths.put(pathCut, pathCutDistance);
+            }
+            distance += pathCutDistance;
+            newCombination = newCombination.substring(1);
+        }
+        return distance;
+    }
+
+    private static double computeDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
         double x = firstCity.keySet().iterator().next();
         double y = firstCity.values().iterator().next();
         double z = secondCity.keySet().iterator().next();
@@ -117,7 +180,7 @@ public class HeldKarp {
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("//")) {
-                    solution = Double.parseDouble(line.substring(3));
+                    solution = line.substring(3);
                 } else {
                     coords.add(line);
                 }
