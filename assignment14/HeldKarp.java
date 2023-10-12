@@ -1,3 +1,4 @@
+import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.DecimalFormat;
@@ -127,27 +128,40 @@ public class HeldKarp {
             return paths.get(combination);
         }
 
-        double distance = 0;
-        String newCombination = combination;
-        while (newCombination.length() > 1) {
-            String pathCut = newCombination.substring(0, 2);
-            double pathCutDistance = 0;
-            if (paths.containsKey(pathCut)) {
-                pathCutDistance = paths.get(pathCut);
-            } else {
-                pathCutDistance = computeDistancePair(citiesCoords.get(pathCut.charAt(0) + ""),
-                        citiesCoords.get(pathCut.charAt(1) + ""));
-                paths.put(pathCut, pathCutDistance);
-            }
-            distance += pathCutDistance;
-            newCombination = newCombination.substring(1);
+//        double distance = 0;
+//        String newCombination = combination;
+        int pathCutEnd = combination.length() - 2;
+        while (!paths.containsKey(combination.substring(0, pathCutEnd))) {
+            pathCutEnd--;
         }
-        return distance;
+        String firstPath = combination.substring(0, pathCutEnd);
+        String secondPath = combination.substring(pathCutEnd - 1, pathCutEnd + 1);
+        String thirdPath = combination.substring(pathCutEnd, pathCutEnd + 2);
+        String fourthPath = combination.substring(pathCutEnd + 1);
+        return Optional.ofNullable(paths.get(firstPath)).orElse(0D) +
+                computeDistancePair(secondPath, citiesCoords) +
+                computeDistancePair(thirdPath, citiesCoords) +
+                Optional.ofNullable(paths.get(fourthPath)).orElse(0D);
+
+
+//        while (newCombination.length() > 1) {
+//            String pathCut = newCombination.substring(0, 2);
+//            double pathCutDistance = 0;
+//            if (paths.containsKey(pathCut)) {
+//                pathCutDistance = paths.get(pathCut);
+//            } else {
+//                pathCutDistance = computeDistancePair(citiesCoords.get(pathCut.charAt(0) + ""),
+//                        citiesCoords.get(pathCut.charAt(1) + ""));
+//                paths.put(pathCut, pathCutDistance);
+//            }
+//            distance += pathCutDistance;
+//            newCombination = newCombination.substring(1);
+//        }
     }
 
     private static double computeDistancePair(String combination,
                                               Map<String, Map<Double, Double>> citiesCoords) {
-        if(combination.length() > 2) {
+        if (combination.length() > 2) {
             throw new IllegalStateException("combination length is " + combination.length());
         }
         return computeDistancePair(
