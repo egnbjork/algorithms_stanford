@@ -4,7 +4,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public class HeldKarp {
-    private static long calculation = 0L;
     private static String solution;
 
     public static void main(String[] args) {
@@ -121,6 +120,9 @@ public class HeldKarp {
                                              Map<String, Map<Double, Double>> citiesCoords,
                                              Map<String, Double> paths) {
         if (combination.isEmpty()) return 0d;
+        if (combination.length() == 2) {
+            return computeDistancePair(combination, citiesCoords);
+        }
         if (paths.containsKey(combination)) {
             return paths.get(combination);
         }
@@ -128,8 +130,6 @@ public class HeldKarp {
         double distance = 0;
         String newCombination = combination;
         while (newCombination.length() > 1) {
-            calculation++;
-            if(calculation % 10000 == 0) System.out.println(calculation);
             String pathCut = newCombination.substring(0, 2);
             double pathCutDistance = 0;
             if (paths.containsKey(pathCut)) {
@@ -143,6 +143,17 @@ public class HeldKarp {
             newCombination = newCombination.substring(1);
         }
         return distance;
+    }
+
+    private static double computeDistancePair(String combination,
+                                              Map<String, Map<Double, Double>> citiesCoords) {
+        if(combination.length() > 2) {
+            throw new IllegalStateException("combination length is " + combination.length());
+        }
+        return computeDistancePair(
+                citiesCoords.get(String.valueOf(combination.charAt(0))),
+                citiesCoords.get(String.valueOf(combination.charAt(1)))
+        );
     }
 
     private static double computeDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
