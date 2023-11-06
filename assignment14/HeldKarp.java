@@ -2,10 +2,13 @@ import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class HeldKarp {
     private static String solution;
+    private static long start = System.currentTimeMillis();
 
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -37,7 +40,8 @@ public class HeldKarp {
 
         for (Map.Entry<String, Map<Double, Double>> city : citiesCoords.entrySet()) {
             addCity(paths, citiesCoords, city.getKey());
-            System.out.println(city);
+            System.out.println(city + " added");
+            System.out.println("took " + convertTime(System.currentTimeMillis() - start));
         }
 
         return getShortestPath(citiesCoords, paths);
@@ -50,18 +54,22 @@ public class HeldKarp {
         if (paths.size() < 2) {
             return;
         }
-        System.out.println("Add city " + ((int) city.charAt(0) - 65) + " to " + paths.size() + " paths");
+        System.out.println("Add city " + ((int) city.charAt(0) - 64) + " to " + paths.size() + " paths");
         List<String> pathsList = new ArrayList<>(paths.keySet());
         for (String s : pathsList) {
             //to prevent paths from yourself (like AA, BB etc.)
             if (s.endsWith(city)) continue;
 
             String newPath = s + city;
-            List<String> combinations = permute(newPath);
+            List<String> combinations = permute(newPath, paths);
+//            System.out.println(combinations.size() + " permitations for string " + city + " and path " + newPath);
+//            int count = 0;
             for (String combination : combinations) {
                 if (!paths.containsKey(combination)) {
+//                    count++;
                     paths.put(combination, computeDistance(combination, citiesCoords, city, paths));
                 }
+//                System.out.println(count + " keys were calculated");
             }
         }
     }
@@ -121,14 +129,14 @@ public class HeldKarp {
                                              Map<String, Map<Double, Double>> citiesCoords,
                                              Map<String, Double> paths) {
         if (combination.isEmpty()) return 0d;
-        if (combination.length() == 2) {
-            return computeDistancePair(combination, citiesCoords);
-        }
         if (paths.containsKey(combination)) {
             return paths.get(combination);
         }
+        if (combination.length() == 2) {
+            return computeDistancePair(combination, citiesCoords);
+        }
 
-//        double distance = 0;
+        double distance = 0;
 //        String newCombination = combination;
         int pathCutEnd = combination.length() - 2;
         while (!paths.containsKey(combination.substring(0, pathCutEnd))) {
@@ -138,25 +146,23 @@ public class HeldKarp {
         String secondPath = combination.substring(pathCutEnd - 1, pathCutEnd + 1);
         String thirdPath = combination.substring(pathCutEnd, pathCutEnd + 2);
         String fourthPath = combination.substring(pathCutEnd + 1);
-        return Optional.ofNullable(paths.get(firstPath)).orElse(0D) +
-                computeDistancePair(secondPath, citiesCoords) +
-                computeDistancePair(thirdPath, citiesCoords) +
-                Optional.ofNullable(paths.get(fourthPath)).orElse(0D);
 
+        distance += Optional.ofNullable(paths.get(firstPath)).orElse(0D);
+        distance += computeDistancePair(secondPath, citiesCoords);
+        paths.put(
+                combination.substring(0, firstPath.length() + secondPath.length() - 1),
+                distance
+        );
 
-//        while (newCombination.length() > 1) {
-//            String pathCut = newCombination.substring(0, 2);
-//            double pathCutDistance = 0;
-//            if (paths.containsKey(pathCut)) {
-//                pathCutDistance = paths.get(pathCut);
-//            } else {
-//                pathCutDistance = computeDistancePair(citiesCoords.get(pathCut.charAt(0) + ""),
-//                        citiesCoords.get(pathCut.charAt(1) + ""));
-//                paths.put(pathCut, pathCutDistance);
-//            }
-//            distance += pathCutDistance;
-//            newCombination = newCombination.substring(1);
-//        }
+        distance += computeDistancePair(thirdPath, citiesCoords);
+        paths.put(
+                combination.substring(0, firstPath.length() + secondPath.length()),
+                distance
+        );
+
+        distance += Optional.ofNullable(paths.get(fourthPath)).orElse(0D);
+        paths.put(combination, distance);
+        return distance;
     }
 
     private static double computeDistancePair(String combination,
@@ -178,22 +184,28 @@ public class HeldKarp {
         return Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w)));
     }
 
-    private static List<String> permute(String input) {
-        List<String> permutations = new ArrayList<>();
-        generatePermutationsRecursive("", input, permutations);
+    private static List<String> permute(String input, Map<String, Double> paths) {
+        List<String> permutations = new LinkedList<>();
+
+        generatePermutationsRecursive("", input, permutations, paths);
         return permutations;
     }
 
-    private static void generatePermutationsRecursive(String prefix, String remaining, List<String> permutations) {
+    private static void generatePermutationsRecursive(String prefix,
+                                                      String remaining,
+                                                      List<String> permutations,
+                                                      Map<String, Double> paths) {
         int length = remaining.length();
 
         if (length == 0) {
-            permutations.add(prefix);
+            if(!paths.containsKey(prefix)) {
+                permutations.add(prefix);
+            }
         } else {
             for (int i = 0; i < length; i++) {
                 String newPrefix = prefix + remaining.charAt(i);
                 String newRemaining = remaining.substring(0, i) + remaining.substring(i + 1);
-                generatePermutationsRecursive(newPrefix, newRemaining, permutations);
+                generatePermutationsRecursive(newPrefix, newRemaining, permutations, paths);
             }
         }
     }
@@ -222,5 +234,31 @@ public class HeldKarp {
         }
 
         return map;
+    }
+
+    private static String convertTime(long score) {
+        StringBuilder sb = new StringBuilder();
+
+        Duration d = Duration.ofMillis(score);
+        long hours = d.toHoursPart();
+        if(hours > 0) {
+            sb.append(hours).append("h ");
+        }
+
+        long minutes = d.toMinutesPart();
+        if(minutes > 0) {
+            sb.append(minutes).append("m ");
+        }
+
+        long seconds = d.toSecondsPart();
+        if(seconds > 0) {
+            sb.append(seconds).append("s ");
+        }
+        long milliseconds = d.toMillisPart();
+        if(milliseconds > 0) {
+            sb.append(milliseconds).append("ms ");
+        }
+
+        return sb.toString();
     }
 }
