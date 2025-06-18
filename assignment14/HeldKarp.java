@@ -3,7 +3,6 @@ import java.io.FileReader;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class HeldKarp {
     private static String solution;
@@ -23,7 +22,6 @@ public class HeldKarp {
                     System.out.println("got " + formattedValue + " instead of " + solution);
                     System.exit(0);
                 }
-
             }
         } else {
             System.out.println(run(args[0]));
@@ -35,93 +33,57 @@ public class HeldKarp {
     private static double run(String filename) {
         System.out.println("run for " + filename);
         Map<String, Map<Double, Double>> citiesCoords = readFile(filename);
-        Map<String, Double> paths = new HashMap<>();
 
-        for (Map.Entry<String, Map<Double, Double>> city : citiesCoords.entrySet()) {
-            addCity(paths, citiesCoords, city.getKey());
-            System.out.println(city + " added");
-            System.out.println("took " + convertTime(System.currentTimeMillis() - start));
-        }
+        // Convert to List<Point> in alphabetical order
+        List<Point> cities = new ArrayList<>();
+        citiesCoords.keySet().stream().sorted().forEach(city -> {
+            Map<Double, Double> coords = citiesCoords.get(city);
+            double x = coords.keySet().iterator().next();
+            double y = coords.values().iterator().next();
+            cities.add(new Point(x, y));
+        });
 
-        return getShortestPath(citiesCoords, paths);
+        return heldKarpBitmask(cities);
     }
 
-    private static void addCity(Map<String, Double> paths,
-            Map<String, Map<Double, Double>> citiesCoords,
-            String newCity) {
-        Set<String> currentCities = paths.keySet().stream()
-            .flatMap(s -> Arrays.stream(s.split("")))
-            .collect(Collectors.toSet());
-        currentCities.add(newCity);
+    private static double heldKarpBitmask(List<Point> cities) {
+        int n = cities.size();
+        double[][] dp = new double[1 << n][n];
 
-        List<String> newCombinations = generateCityCombinations(currentCities);
+        for (double[] row : dp) {
+            Arrays.fill(row, Double.POSITIVE_INFINITY);
+        }
 
-        for (String path : newCombinations) {
-            if (path.contains(newCity)) {
-                paths.put(path, computeDistance(path, citiesCoords, newCity, paths));
+        dp[1][0] = 0;
+
+        for (int mask = 1; mask < (1 << n); mask++) {
+            for (int last = 0; last < n; last++) {
+                if ((mask & (1 << last)) == 0) continue;
+
+                for (int next = 0; next < n; next++) {
+                    if ((mask & (1 << next)) != 0) continue;
+
+                    int nextMask = mask | (1 << next);
+                    double dist = distance(cities.get(last), cities.get(next));
+                    dp[nextMask][next] = Math.min(dp[nextMask][next], dp[mask][last] + dist);
+                }
             }
         }
-    }
 
-    private static List<String> generateCityCombinations(Set<String> cities) {
-        List<String> results = new ArrayList<>();
-        permute("", String.join("", cities), results);
-        return results;
-    }
-
-    private static void permute(String prefix, String remaining, List<String> results) {
-        if (remaining.isEmpty()) {
-            results.add(prefix);
-        } else {
-            for (int i = 0; i < remaining.length(); i++) {
-                permute(prefix + remaining.charAt(i),
-                        remaining.substring(0, i) + remaining.substring(i + 1),
-                        results);
-            }
-        }
-    }
-
-    private static double computeDistance(String combination,
-            Map<String, Map<Double, Double>> citiesCoords,
-            String newCity,
-            Map<String, Double> paths) {
-
-        if (combination.length() <= 1) return 0;
-
-        double min = Double.POSITIVE_INFINITY;
-
-        for (int i = 1; i < combination.length(); i++) {
-            String prev = combination.substring(0, i) + combination.substring(i + 1);
-            String last = combination.substring(i, i + 1);
-            if (!paths.containsKey(prev)) continue;
-
-            double cost = paths.get(prev) + computeDistancePair(
-                    citiesCoords.get(last), citiesCoords.get(combination.substring(0, 1)));
-            min = Math.min(min, cost);
+        double minCost = Double.POSITIVE_INFINITY;
+        int fullMask = (1 << n) - 1;
+        for (int j = 1; j < n; j++) {
+            double totalCost = dp[fullMask][j] + distance(cities.get(j), cities.get(0));
+            minCost = Math.min(minCost, totalCost);
         }
 
-        return min;
+        return minCost;
     }
 
-    private static double getShortestPath(Map<String, Map<Double, Double>> citiesCoords,
-            Map<String, Double> paths) {
-        int maxLength = citiesCoords.size();
-
-        return paths.entrySet().stream()
-            .filter(e -> e.getKey().length() == maxLength)
-            .filter(e -> e.getKey().startsWith("A"))
-            .mapToDouble(e -> e.getValue() + computeDistancePair(
-                        citiesCoords.get(e.getKey().substring(e.getKey().length() - 1)),
-                        citiesCoords.get("A")))
-            .min().orElse(Double.POSITIVE_INFINITY);
-    }
-
-    private static double computeDistancePair(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
-        double x1 = firstCity.keySet().iterator().next();
-        double y1 = firstCity.values().iterator().next();
-        double x2 = secondCity.keySet().iterator().next();
-        double y2 = secondCity.values().iterator().next();
-        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    private static double distance(Point a, Point b) {
+        double dx = a.x - b.x;
+        double dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     private static Map<String, Map<Double, Double>> readFile(String filename) {
@@ -144,15 +106,18 @@ public class HeldKarp {
             Character cityName = (char) (65 + i);
             String[] cityCoords = coords.get(i).split(" ");
             map.put(String.valueOf(cityName), Map.of(Double.valueOf(cityCoords[0]),
-                        Double.valueOf(cityCoords[1])));
+                    Double.valueOf(cityCoords[1])));
         }
 
         return map;
     }
 
-    private static String convertTime(long millis) {
-        Duration d = Duration.ofMillis(millis);
-        return String.format("%02dh %02dm %02ds %03dms",
-                d.toHoursPart(), d.toMinutesPart(), d.toSecondsPart(), d.toMillisPart());
+    private static class Point {
+        double x, y;
+
+        Point(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
     }
 }
