@@ -4,7 +4,6 @@ import java.text.DecimalFormat;
 
 public class TSPHeuristic {
 
-  private static Double solution;
   private static boolean debug = true;
 
   public static void main(String[] args) {
@@ -23,7 +22,8 @@ public class TSPHeuristic {
 
   private static void run(String filename) {
     System.out.println("run for " + filename);
-    Map<String, Map<Double, Double>> citiesCoords = readFile(filename);
+    Map<Integer, Map<Double, Double>> citiesCoords = readFile(filename);
+    System.out.println(citiesCoords);
   }
 
   private static double calculateDistance(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
@@ -34,15 +34,13 @@ public class TSPHeuristic {
     return Math.sqrt(((x - z) * (x - z)) + ((y - w) * (y - w)));
   }
 
-  private static Map<String, Map<Double, Double>> readFile(String filename) {
-    Map<String, Map<Double, Double>> map = new HashMap<>();
+  private static Map<Integer, Map<Double, Double>> readFile(String filename) {
+    Map<Integer, Map<Double, Double>> map = new HashMap<>();
     List<String> coords = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
       String line = br.readLine();
       while ((line = br.readLine()) != null) {
-        if(line.startsWith("//")) {
-          solution = Double.valueOf(line.substring(3));
-        } else {
+        if(!line.startsWith("//")) {
           coords.add(line);
         }
       }
@@ -51,10 +49,10 @@ public class TSPHeuristic {
     }
 
     for (int i = 0; i < coords.size(); i++) {
-      Character cityName = (char) (65 + i);
       String[] cityCoords = coords.get(i).split(" ");
-      map.put(String.valueOf(cityName), Map.of(Double.valueOf(cityCoords[0]),
-                                               Double.valueOf(cityCoords[1])));
+      Integer cityName = Integer.valueOf(cityCoords[0]);
+      map.put(cityName, Map.of(Double.valueOf(cityCoords[1]),
+                                               Double.valueOf(cityCoords[2])));
     }
 
     return map;
