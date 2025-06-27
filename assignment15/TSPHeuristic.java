@@ -23,7 +23,21 @@ public class TSPHeuristic {
   private static void run(String filename) {
     System.out.println("run for " + filename);
     Map<Integer, Map<Double, Double>> citiesCoords = readFile(filename);
-    System.out.println(citiesCoords);
+    Map.Entry<String, Double> shortestDistance = calculateTsp(citiesCoords).entrySet().iterator().next();
+    System.out.println("shortest path is " + shortestDistance.getKey());
+    System.out.println("shortest distance is " + shortestDistance.getValue());
+  }
+
+  private static Map<String, Double> calculateTsp(Map<Integer, Map<Double, Double>> cities) {
+    String path = new String();
+    Double distance = 0D;
+    Map<String, Double> tsp = new HashMap<>();
+
+    for (int i = 0; i < cities.size(); i++) {
+    }
+
+    tsp.put(path, distance);
+    return tsp;  
   }
 
   private static double calculateDistance(Map<Double, Double> firstCity, Map<Double, Double> secondCity) {
